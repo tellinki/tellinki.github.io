@@ -1,7 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
-  <base href="https://www.tellinki.com/" target="_blank">
+    <!--<base href="https://www.tellinki.com/" target="_blank">-->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Tellinki.com</title>
+    <meta name="description" content="City of Helsinki Bicycle Stands">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#f5f8fa">
+    <link rel="manifest" href="manifest.json">
+    <!--Android-->
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="icon" sizes="192x192" href="images/icons/desktop/android-chrome-192x192.png">
+    <link rel="icon" sizes="512x512" href="images/icons/desktop/android-chrome-512x512.png">
+    <!--iOS-->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Tellinki.com">
+    <link rel="apple-touch-icon-precomposed" href="images/icons/desktop/apple-touch-icon.png">
+    <link rel="mask-icon" href="images/icons/desktop/safari-pinned-tab.svg" color="#5bbad5">
+    <!--MS-->
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="msapplication-TileImage" content="images/icons/desktop/mstile-150x150.png">
+    <meta name="msapplication-TileColor" content="#ffc40d">
+    <!--Favicon-->
+    <link rel="icon" type="image/png" sizes="32x32" href="images/icons/desktop/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/icons/desktop/favicon-16x16.png">
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="css/normalize.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        #map {
+            height: 100vh;
+            width: 100vw;
+        }
+    </style>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="js/leaflet-providers.min.js"></script>
 </head>
+
 <body>
-  <h1>Tellinki.com</h1>
-  <p>Under construction</p>
+    <main>
+        <div id="map"></div>
+    </main>
+    <noscript>Turn on JavaScript to access this site content.</noscript>
+    <script>
+        // initialize the map with leaflet.js
+        var map = L.map('map', { minZoom: 13 })
+        // default to Helsinki Railway Station
+        map.setView([60.172, 24.934], 13);
+        // set the current map view as bounds
+        map.setMaxBounds(map.getBounds());
+        // set the desired tiles with attribution
+        L.tileLayer.provider('CartoDB.Voyager').addTo(map);
+        // asks for the user's current location
+        map.locate({ setView: true, maxZoom: 16 });
+        // load GeoJSON data from Open Street Map
+        // TODO
+        // register serviceWorker to allow installing as app
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
 </body>
+
+</html>
