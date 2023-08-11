@@ -2,31 +2,30 @@
 <html lang="en">
 
 <head>
-    <!--<base href="https://www.tellinki.com/" target="_blank">-->
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Tellinki.com</title>
     <meta name="description" content="City of Helsinki Bicycle Stands">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#f5f8fa">
+    <meta name="theme-color" content="#006ee6">
     <link rel="manifest" href="manifest.json">
     <!--Android-->
     <meta name="mobile-web-app-capable" content="yes">
-    <link rel="icon" sizes="192x192" href="images/icons/desktop/android-chrome-192x192.png">
-    <link rel="icon" sizes="512x512" href="images/icons/desktop/android-chrome-512x512.png">
+    <link rel="icon" sizes="192x192" href="images/icons/icon-192x192.png">
+    <link rel="icon" sizes="512x512" href="images/icons/icon-512x512.png">
     <!--iOS-->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Tellinki.com">
-    <link rel="apple-touch-icon-precomposed" href="images/icons/desktop/apple-touch-icon.png">
+    <link rel="apple-touch-icon-precomposed" href="images/icons/icon-512x512.png">
     <link rel="mask-icon" href="images/icons/desktop/safari-pinned-tab.svg" color="#5bbad5">
     <!--MS-->
     <meta name="msapplication-tap-highlight" content="no">
-    <meta name="msapplication-TileImage" content="images/icons/desktop/mstile-150x150.png">
-    <meta name="msapplication-TileColor" content="#ffc40d">
+    <meta name="msapplication-TileImage" content="images/icons/icon-150x150.png">
+    <meta name="msapplication-TileColor" content="#006ee6">
     <!--Favicon-->
-    <link rel="icon" type="image/png" sizes="32x32" href="images/icons/desktop/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="images/icons/desktop/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/icons/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/icons/icon-16x16.png">
     <!-- Leaflet -->
     <link rel="stylesheet" href="css/normalize.min.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -52,28 +51,51 @@
     <noscript>Turn on JavaScript to access this site content.</noscript>
     <script>
         // initialize the map with leaflet.js
-        var map = L.map('map', { minZoom: 11 })
+        var map = L.map('map', { minZoom: 11, maxZoom: 18 })
         // add marker clustering for performance
         var markers = L.markerClusterGroup({ maxClusterRadius: 50 });
         // center the map to show Helsinki well
         map.setView([60.2097412, 24.98643], 11);
-        // set the current map view as bounds
-        map.setMaxBounds(map.getBounds());
+        // set the map view bounds (Desktop size)
+        map.setMaxBounds(L.latLngBounds(L.latLng(60.3300069, 25.5136872), L.latLng(60.0888172, 24.4589996)));
         // set the desired tiles with attribution
         L.tileLayer.provider('CartoDB.Voyager').addTo(map);
         // asks for the user's current location
-        map.locate({ setView: true, maxZoom: 16 });
-        // load bicycle parking from overpass API
-        var query = '[out:json];area[name="Helsinki"];(node(area)[amenity=bicycle_parking];>;);out;'
-        fetch('https://overpass-api.de/api/interpreter', {
-            method: 'POST',
-            body: query,
-            headers: { 'Content-type': 'application/json; charset=UTF-8' }
-        })
+        map.locate({ setView: true, watch: true, enableHighAccuracy: true });
+        // and add location indicator if enabled
+        var locationMarker;
+        map.on('locationfound', function (e) {
+            locationMarker != null ?
+                locationMarker.setLatLng(e.latlng) :
+                locationMarker = L.circleMarker(e.latlng, { radius: 10, fillColor: '#006ee6', fillOpacity: 1, color: '#FFFFFF' }).addTo(map)
+        });
+        // defined query for the bicycle parking data
+        var query = '[out:json];area[name="Helsinki"];(nw(area)[amenity=bicycle_parking];>;);out;'
+        // and fetch information from the overpass API
+        fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: query })
             .then((response) => response.json())
             .then((json) => {
                 var data = json['elements'];
-                for (var i = 0; i < data.length; i++) markers.addLayer(L.marker([data[i]['lat'], data[i]['lon']]));
+                var node = {};
+                var ways = [];
+                // separate ways from the nodes
+                for (var i = 0; i < data.length; i++) data[i]['type'] == 'node' ? node[data[i]['id']] = data[i] : ways.push(data[i]);
+                // aggregate ways to single node
+                var duplicates = []
+                for (var j = 0; j < ways.length; j++) {
+                    var lat = 0;
+                    var lon = 0;
+                    var len = ways[j]['nodes'].length;
+                    for (var k = 0; k < len; k++) {
+                        lat += node[ways[j]['nodes'][k]]['lat'];
+                        lon += node[ways[j]['nodes'][k]]['lon'];
+                    }
+                    // set single node with the average from ways
+                    node[ways[j][k]] = { 'lat': lat / len, 'lon': lon / len };
+                }
+                // add node to cluster
+                for (var n in node) if ('tags' in node[n]) markers.addLayer(L.marker([node[n]['lat'], node[n]['lon']]));
+                // add cluster to map
                 map.addLayer(markers);
             })
         // register serviceWorker to allow installing as app

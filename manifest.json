@@ -2,7 +2,7 @@
     "name": "Tellinki.com",
     "short_name": "Tellinki",
     "description": "Helsinki Bicycle Stands",
-    "theme_color": "#f5f8fa",
+    "theme_color": "#006ee6",
     "background_color": "white",
     "display": "standalone",
     "Scope": "./",
