@@ -31,6 +31,8 @@
     <link rel="stylesheet" href="css/normalize.min.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
     <style>
         #map {
             height: 100vh;
@@ -39,6 +41,7 @@
     </style>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <script src="js/leaflet-providers.min.js"></script>
 </head>
 
@@ -49,17 +52,30 @@
     <noscript>Turn on JavaScript to access this site content.</noscript>
     <script>
         // initialize the map with leaflet.js
-        var map = L.map('map', { minZoom: 13 })
-        // default to Helsinki Railway Station
-        map.setView([60.172, 24.934], 13);
+        var map = L.map('map', { minZoom: 11 })
+        // add marker clustering for performance
+        var markers = L.markerClusterGroup({ maxClusterRadius: 50 });
+        // center the map to show Helsinki well
+        map.setView([60.2097412, 24.98643], 11);
         // set the current map view as bounds
         map.setMaxBounds(map.getBounds());
         // set the desired tiles with attribution
         L.tileLayer.provider('CartoDB.Voyager').addTo(map);
         // asks for the user's current location
         map.locate({ setView: true, maxZoom: 16 });
-        // load GeoJSON data from Open Street Map
-        // TODO
+        // load bicycle parking from overpass API
+        var query = '[out:json];area[name="Helsinki"];(node(area)[amenity=bicycle_parking];>;);out;'
+        fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST',
+            body: query,
+            headers: { 'Content-type': 'application/json; charset=UTF-8' }
+        })
+            .then((response) => response.json())
+            .then((json) => {
+                var data = json['elements'];
+                for (var i = 0; i < data.length; i++) markers.addLayer(L.marker([data[i]['lat'], data[i]['lon']]));
+                map.addLayer(markers);
+            })
         // register serviceWorker to allow installing as app
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('service-worker.js');
