@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Tellinki.com</title>
-    <meta name="description" content="City of Helsinki Bicycle Stands">
+    <meta name="description" content="Simple map of Helsinki Bicycle Parking">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#0050aa">
     <link rel="manifest" href="manifest.json">
@@ -51,6 +51,25 @@
             color: #FFF;
             background-color: #0050aa;
         }
+
+        .leaflet-tooltip-right:before {
+            border: 0px;
+        }
+
+        .leaflet-tooltip.marker-label {
+            top: -16px;
+            font-size: 10px;
+            font-weight: bold;
+            text-align: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin: 0px;
+            padding: 4px;
+            line-height: 1.8;
+            color: #0050aa;
+            background-color: #FFF;
+        }
     </style>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -77,6 +96,9 @@
         L.tileLayer.provider('CartoDB.Voyager').addTo(map);
         // allow asking for the user's current location
         L.control.locate().addTo(map);
+        // add custom icons for rack and stand markers
+        var rackIcon = L.icon({ iconUrl: 'images/icons/icon-rack.png', iconSize: [32, 32] });
+        var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
         // defined query for the bicycle parking data
         var query = '[out:json];area[name="Helsinki"];(nw(area)[amenity=bicycle_parking];>;);out;'
         // and fetch information from the overpass API
@@ -98,18 +120,32 @@
                         lat += node[ways[j]['nodes'][k]]['lat'];
                         lon += node[ways[j]['nodes'][k]]['lon'];
                     }
-                    // set single node with the average from ways
-                    node[ways[j][k]] = { 'lat': lat / len, 'lon': lon / len };
+                    // set single node with the average from nodes
+                    ways[j]['lat'] = lat / len;
+                    ways[j]['lon'] = lon / len;
+                    node[ways[j][k]] = ways[j];
                 }
                 // add node to cluster
-                for (var n in node) if ('tags' in node[n]) markers.addLayer(L.marker([node[n]['lat'], node[n]['lon']]));
+                for (var n in node) {
+                    if ('tags' in node[n]) {
+                        var amenity = node[n]['tags']['bicycle_parking'];
+                        // skip other than stands or wall loop for now
+                        if (!['stands', 'wall_loops'].includes(amenity)) continue;
+                        // add custom marker item to indicate parking
+                        var icon = amenity == 'stands' ? standIcon : rackIcon;
+                        var mark = L.marker([node[n]['lat'], node[n]['lon']], { icon: icon });
+                        // add capacity indicator to icon
+                        var capacity = node[n]['tags']['capacity']
+                        if (capacity) mark.bindTooltip(capacity, { permanent: true, direction: 'right', className: 'marker-label' });
+                        // finally, add the marker to the map layer
+                        markers.addLayer(mark);
+                    }
+                }
                 // add cluster to map
                 map.addLayer(markers);
             })
         // register serviceWorker to allow installing as app
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js');
-        }
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js');
     </script>
 </body>
 
