@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Tellinki.com</title>
-    <meta name="description" content="Simple map of Helsinki Bicycle Parking">
+    <meta name="description" content="Tellinki - Runkolukittavat pyörätelineet Helsingissä">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#0050aa">
     <link rel="manifest" href="manifest.json">
@@ -100,7 +100,7 @@
         var rackIcon = L.icon({ iconUrl: 'images/icons/icon-rack.png', iconSize: [32, 32] });
         var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
         // defined query for the bicycle parking data
-        var query = '[out:json];area[name="Helsinki"];(nw(area)[amenity=bicycle_parking];>;);out;'
+        var query = '[out:json];area[name="Helsinki"];(nw(area)[amenity=bicycle_parking]["access"!="private"];>;);out;'
         // and fetch information from the overpass API
         fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: query })
             .then((response) => response.json())

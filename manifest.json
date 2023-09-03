@@ -1,7 +1,7 @@
 {
     "name": "Tellinki.com",
     "short_name": "Tellinki",
-    "description": "Helsinki Bicycle Stands",
+    "description": "Tellinki - Runkolukittavat pyörätelineet Helsingissä",
     "theme_color": "#006ee6",
     "background_color": "white",
     "display": "standalone",
