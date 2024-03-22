@@ -1,7 +1,7 @@
 # Tellinki
 **Simple map of Helsinki Bicycle Parking**
 
-Tellinki.com is a static PWA website, utilizing leaflet.js and Open Street Map database for showing different types of bicycle parking in Helsinki.
+Tellinki.com is a static PWA website, utilizing leaflet.js and OpenStreetMap database for showing different types of bicycle parking in Helsinki.
 
 ## Development
 
@@ -17,4 +17,4 @@ The website domain is registered at Namecheap and DNS is handled with Cloudflare
 
 ## Contribution
 
-For any code changes, simply create a PR. For improving the data accuracy, edit the Open Street Map database.
+For any code changes, simply create a PR. For improving the data accuracy, edit the OpenStreetMap database.
