@@ -100,7 +100,7 @@
         var rackIcon = L.icon({ iconUrl: 'images/icons/icon-rack.png', iconSize: [32, 32] });
         var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
         // defined query for the bicycle parking data
-        var query = '[out:json];area[name="Helsinki"];(nw(area)[amenity=bicycle_parking]["access"!="private"];>;);out center;'
+        var query = '[out:json];area[name="Pääkaupunkiseutu"];(nwr(area)[amenity=bicycle_parking]["access"!="private"];>;);out center;'
         // and fetch information from the overpass API
         fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: query })
             .then((response) => response.json())
