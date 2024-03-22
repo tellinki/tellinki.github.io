@@ -93,7 +93,7 @@
         // set the map view bounds (Desktop size)
         map.setMaxBounds(L.latLngBounds(L.latLng(60.3300069, 25.5136872), L.latLng(60.0888172, 24.4589996)));
         // set the desired tiles with attribution
-        L.tileLayer.provider('CartoDB.Voyager').addTo(map);
+        L.tileLayer.provider('CartoDB.VoyagerLabelsUnder').addTo(map);
         // allow asking for the user's current location
         L.control.locate().addTo(map);
         // add custom icons for rack and stand markers
@@ -109,22 +109,22 @@
                 var node = {};
                 var ways = [];
                 // separate ways from the nodes
-                #for (var i = 0; i < data.length; i++) data[i]['type'] == 'node' ? node[data[i]['id']] = data[i] : ways.push(data[i]);
+                for (var i = 0; i < data.length; i++) data[i]['type'] == 'node' ? node[data[i]['id']] = data[i] : ways.push(data[i]);
                 // aggregate ways to single node
-                #var duplicates = []
-                #for (var j = 0; j < ways.length; j++) {
-                    #var lat = 0;
-                    #var lon = 0;
-                    #var len = ways[j]['nodes'].length;
-                    #for (var k = 0; k < len; k++) {
-                        #lat += node[ways[j]['nodes'][k]]['lat'];
-                        #lon += node[ways[j]['nodes'][k]]['lon'];
-                    #}
-                    #// set single node with the average from nodes
-                    #ways[j]['lat'] = lat / len;
-                    #ways[j]['lon'] = lon / len;
-                    #node[ways[j][k]] = ways[j];
-                #}
+                var duplicates = []
+                for (var j = 0; j < ways.length; j++) {
+                    var lat = 0;
+                    var lon = 0;
+                    var len = ways[j]['nodes'].length;
+                    for (var k = 0; k < len; k++) {
+                        lat += node[ways[j]['nodes'][k]]['lat'];
+                        lon += node[ways[j]['nodes'][k]]['lon'];
+                    }
+                    // set single node with the average from nodes
+                    ways[j]['lat'] = lat / len;
+                    ways[j]['lon'] = lon / len;
+                    node[ways[j][k]] = ways[j];
+                }
                 // add node to cluster
                 for (var n in node) {
                     if ('tags' in node[n]) {
