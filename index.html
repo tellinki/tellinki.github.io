@@ -108,13 +108,13 @@
                 var data = json['elements'];
                 
                 // try to format data and put in into array
-                var node = data.map(entry) => {
-                  var combinedEntry = {
+                var node = data.map(entry => {
+                  const combinedEntry = {
                     lat: entry.lat || entry.center.lat,
                     lon: entry.lon || entry.center.lon, 
                     tags: entry.tags
                   };
-                return combinedEntry;
+                  return combinedEntry;
                 });
                 
                 // add node to cluster
