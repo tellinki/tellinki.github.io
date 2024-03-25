@@ -106,11 +106,16 @@
             .then((response) => response.json())
             .then((json) => {
                 var data = json['elements'];
-                var node = {};
-                var ways = [];
-                
-                // separate ways from the nodes
-                for (var i = 0; i < data.length; i++) data[i]['type'] == 'node' ? node[data[i]['id']] = data[i] : ways.push(data[i]);
+                var node = data.map(entry => {
+                  const combinedEntry = {
+                    type: entry.type,
+                    id: entry.id,
+                    lat: entry.lat || entry.center.lat,
+                    lon: entry.lon || entry.center.lon, 
+                    tags: entry.tags
+                  };
+                return combinedEntry;
+                });
                 
                 // add node to cluster
                 for (var n in node) {
