@@ -106,7 +106,7 @@
             .then((response) => response.json())
             .then((json) => {
                 var data = json['elements'];
-                var node = data.map(entry => {
+                const node = data.map(entry => {
                   const combinedEntry = {
                     type: entry.type,
                     id: entry.id,
