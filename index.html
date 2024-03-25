@@ -106,25 +106,8 @@
             .then((response) => response.json())
             .then((json) => {
                 var data = json['elements'];
-                var node = {};
+                var node = [];
                 var ways = [];
-                // separate ways from the nodes
-                for (var i = 0; i < data.length; i++) data[i]['type'] == 'node' ? node[data[i]['id']] = data[i] : ways.push(data[i]);
-                // aggregate ways to single node
-                var duplicates = []
-                for (var j = 0; j < ways.length; j++) {
-                    var lat = 0;
-                    var lon = 0;
-                    var len = ways[j]['nodes'].length;
-                    for (var k = 0; k < len; k++) {
-                        lat += node[ways[j]['nodes'][k]]['lat'];
-                        lon += node[ways[j]['nodes'][k]]['lon'];
-                    }
-                    // set single node with the average from nodes
-                    ways[j]['lat'] = lat / len;
-                    ways[j]['lon'] = lon / len;
-                    node[ways[j][k]] = ways[j];
-                }
                 // add node to cluster
                 for (var n in node) {
                     if ('tags' in node[n]) {
