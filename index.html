@@ -107,16 +107,15 @@
             .then((json) => {
                 var data = json['elements'];
                 var node = []
+                
                 // try to format data and put in into array
-                var node = data.map(entry => {
-                  const combinedEntry = {
-                    type: entry.type,
-                    id: entry.id,
-                    lat: entry.lat || entry.center.lat,
-                    lon: entry.lon || entry.center.lon, 
-                    tags: entry.tags
+                var node = data.map({
+                  var combinedEntry = {
+                    lat: lat || center.lat,
+                    lon: lon || center.lon, 
+                    tags: tags
                   };
-                return combinedEntry;
+                var combinedEntry;
                 });
                 
                 // add node to cluster
