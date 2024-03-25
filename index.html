@@ -106,7 +106,8 @@
             .then((response) => response.json())
             .then((json) => {
                 var data = json['elements'];
-                const node = data.map(entry => {
+                
+                const combinedData = data.map(entry => {
                   const combinedEntry = {
                     type: entry.type,
                     id: entry.id,
@@ -116,6 +117,8 @@
                   };
                 return combinedEntry;
                 });
+
+                var node [combinedEntry];
                 
                 // add node to cluster
                 for (var n in node) {
