@@ -106,8 +106,12 @@
             .then((response) => response.json())
             .then((json) => {
                 var data = json['elements'];
-                var node = [];
+                var node = {};
                 var ways = [];
+                
+                // separate ways from the nodes
+                for (var i = 0; i < data.length; i++) data[i]['type'] == 'node' ? node[data[i]['id']] = data[i] : ways.push(data[i]);
+                
                 // add node to cluster
                 for (var n in node) {
                     if ('tags' in node[n]) {
