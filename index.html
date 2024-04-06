@@ -99,43 +99,28 @@
         // add custom icons for rack and stand markers
         var rackIcon = L.icon({ iconUrl: 'images/icons/icon-rack.png', iconSize: [32, 32] });
         var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
-        // defined query for the bicycle parking data
-        var query = '[out:json];area[name="Pääkaupunkiseutu"];(nw(area)[amenity=bicycle_parking]["access"!="private"];>;);out center;'
         // and fetch information from the overpass API
-        fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: query })
-            .then((response) => response.json())
-            .then((json) => {
-                var data = json['elements'];
-                
-                // try to format data and put in into array
-                var node = data.map(entry => {
-                  const combinedEntry = {
-                    lat: entry.lat || entry.center.lat,
-                    lon: entry.lon || entry.center.lon, 
-                    tags: entry.tags
-                  };
-                  return combinedEntry;
-                });
-                
-                // add node to cluster
-                for (var n in node) {
-                    if ('tags' in node[n]) {
-                        var amenity = node[n]['tags']['bicycle_parking'];
-                        // skip other than stands or wall loop for now
-                        if (!['stands', 'wall_loops'].includes(amenity)) continue;
-                        // add custom marker item to indicate parking
-                        var icon = amenity == 'stands' ? standIcon : rackIcon;
-                        var mark = L.marker([node[n]['lat'], node[n]['lon']], { icon: icon });
-                        // add capacity indicator to icon
-                        var capacity = node[n]['tags']['capacity']
-                        if (capacity) mark.bindTooltip(capacity, { permanent: true, direction: 'right', className: 'marker-label' });
-                        // finally, add the marker to the map layer
-                        markers.addLayer(mark);
-                    }
-                }
-                // add cluster to map
-                map.addLayer(markers);
-            })
+        fetch('/parking.json').then((response) => response.json()).then((json) => {
+            for (var i = 0; i < json['features'].length; i++) {
+                var item = json['features'][i];
+                // skip other than stands or wall loops
+                var amenity = item['properties']['bicycle_parking'];
+                if (amenity == null || !['stands', 'wall_loops'].includes(amenity)) continue;
+                // add custom marker item to indicate parking
+                var icon = amenity == 'stands' ? standIcon : rackIcon;
+                // get the coordinates and create marker
+                var location = item['geometry']['coordinates'];
+                if(location.length != 2) continue;
+                var mark = L.marker(location, { icon: icon });
+                // add capacity indicator to icon (if available)
+                var capacity = item['properties']['capacity']
+                if (capacity) mark.bindTooltip(capacity, { permanent: true, direction: 'right', className: 'marker-label' });
+                // finally, add the marker to the map layer
+                markers.addLayer(mark);
+            }
+            // add cluster to map
+            map.addLayer(markers);
+        })
         // register serviceWorker to allow installing as app
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js');
     </script>
