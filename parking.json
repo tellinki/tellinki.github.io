@@ -1,7 +1,7 @@
 {
 "type": "FeatureCollection",
 "name": "parking",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:ESRI::102113" } },
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::3857" } },
 "features": [
 { "type": "Feature", "properties": { "id": "way/23480092", "@id": "way/23480092", "access": "yes", "amenity": "bicycle_parking", "bicycle_parking": "stands", "capacity": "156", "covered": "yes", "fee": "no", "layer": null, "level": null, "level:ref": null }, "geometry": { "type": "Point", "coordinates": [ 2744858.385012105107307, 8445635.579771917313337 ] } },
 { "type": "Feature", "properties": { "id": "way/25648871", "@id": "way/25648871", "access": null, "amenity": "bicycle_parking", "bicycle_parking": "stands", "capacity": "80", "covered": "no", "fee": null, "layer": null, "level": null, "level:ref": null }, "geometry": { "type": "Point", "coordinates": [ 2745680.345868224278092, 8436878.202926283702254 ] } },
