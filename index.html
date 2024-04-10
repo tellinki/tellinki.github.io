@@ -109,9 +109,7 @@
                 // add custom marker item to indicate parking
                 var icon = amenity == 'stands' ? standIcon : rackIcon;
                 // get the coordinates and create marker
-                var location = item['geometry']['coordinates'];
-                if(location.length != 2) continue;
-                var mark = L.marker(location, { icon: icon });
+                var mark = L.marker([item['properties']['lat'], item['properties']['lon']], { icon: icon });
                 // add capacity indicator to icon (if available)
                 var capacity = item['properties']['capacity']
                 if (capacity) mark.bindTooltip(capacity, { permanent: true, direction: 'right', className: 'marker-label' });
