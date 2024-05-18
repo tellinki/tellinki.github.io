@@ -122,15 +122,16 @@
         var rackIcon = L.icon({ iconUrl: 'images/icons/icon-rack.png', iconSize: [32, 32] });
         var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
         var twotierIcon = L.icon({ iconUrl: 'images/icons/icon-twotier.png', iconSize: [32, 32] });
+        var safeloopIcon = L.icon({ iconUrl: 'images/icons/icon-safeloop.png', iconSize: [32, 32] });
         
         // and fetch information from the json
         fetch('/parking.json').then((response) => response.json()).then((json) => {
             for (var i = 0; i < json['features'].length; i++) {
                 var item = json['features'][i];
                 
-                // skip other than stands or racks or two-tiers
+                // skip other than stands or racks or two-tiers or safe_loops
                 var amenity = item['properties']['bicycle_parking'];
-                if (amenity == null || !['stands', 'two-tier', 'rack'].includes(amenity)) continue;
+                if (amenity == null || !['stands', 'safe_loops' 'two-tier', 'rack'].includes(amenity)) continue;
                 
                 // add custom marker item to indicate parking
                 var icon;
@@ -138,6 +139,8 @@
                         icon = standIcon;
                 } else if (amenity === 'rack') {
                         icon = rackIcon;
+                } else if (amenity === 'safe_loops') {
+                        icon = safeloopIcon;
                 } else if (amenity === 'two-tier') {
                         icon = twotierIcon;
                 }
