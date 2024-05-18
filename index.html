@@ -102,18 +102,28 @@
         // allow asking for the user's current location
         L.control.locate().addTo(map);
 
-        // add popup for info
-        var popup = L.popup()
-        .setLatLng(latlng)
-        .setContent('<p>Uusimmat päivitykset!<br />Aineisto päivitetty 18.5.2024</p> <p>Lisätty kaksikerroksiset pyörätelineet (esim. Kaisantunnellissa ja monilla metroasemilla</p>')
-        .openOn(map);
+        // add text box
+        L.Control.Textbox = L.Control.extend({
+            onAdd: function(map) {
+                var text = L.DomUtil.create('div', 'info-text'); // Added a class for styling
+                text.id = "info_text";
+                text.innerHTML = "<strong>Aineisto päivitetty 18.5.2024. Lisätty myös kaksikerroksiset pyörätelineet uutena tyyppinä.</strong>";
+                return text;
+            },
+            onRemove: function(map) {
+            }
+        });
+        L.control.textbox = function(opts) {
+            return new L.Control.Textbox(opts);
+        };
+        L.control.textbox({ position: 'bottomleft' }).addTo(map);
         
         // add custom icons for rack and stand markers
         var rackIcon = L.icon({ iconUrl: 'images/icons/icon-rack.png', iconSize: [32, 32] });
         var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
         var twotierIcon = L.icon({ iconUrl: 'images/icons/icon-twotier.png', iconSize: [32, 32] });
         
-        // and fetch information from the overpass API
+        // and fetch information from the json
         fetch('/parking.json').then((response) => response.json()).then((json) => {
             for (var i = 0; i < json['features'].length; i++) {
                 var item = json['features'][i];
