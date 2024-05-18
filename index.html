@@ -101,6 +101,12 @@
         
         // allow asking for the user's current location
         L.control.locate().addTo(map);
+
+        // add popup for info
+        var popup = L.popup()
+        .setLatLng(latlng)
+        .setContent('<p>Uusimmat päivitykset!<br />Aineisto päivitetty 18.5.2024</p> <p>Lisätty kaksikerroksiset pyörätelineet (esim. Kaisantunnellissa ja monilla metroasemilla</p>')
+        .openOn(map);
         
         // add custom icons for rack and stand markers
         var rackIcon = L.icon({ iconUrl: 'images/icons/icon-rack.png', iconSize: [32, 32] });
