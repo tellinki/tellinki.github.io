@@ -91,7 +91,7 @@
         var map = L.map('map', { minZoom: 10, maxZoom: 20 })
         
         // add marker clustering for performance
-        var markers = L.markerClusterGroup({ maxClusterRadius: 100 });
+        var markers = L.markerClusterGroup({ maxClusterRadius: 150 });
         
         // center the map to show Helsinki well
         map.setView([60.2097412, 24.98643], 11);
@@ -110,7 +110,7 @@
             onAdd: function(map) {
                 var text = L.DomUtil.create('div', 'info-text'); // Added a class for styling
                 text.id = "info_text";
-                text.innerHTML = "<strong>Aineisto päivitetty 18.5.2024. Lisätty myös kaksikerroksiset ja safe loops pyörätelineet uusina tyyppeinä.</strong>";
+                text.innerHTML = "<strong>Aineisto päivitetty 18.5.2024. Lisätty myös kaksikerroksiset ja "safe loops" pyörätelineet uusina tyyppeinä.</strong>";
                 return text;
             },
             onRemove: function(map) {
