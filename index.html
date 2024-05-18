@@ -99,15 +99,16 @@
         // add custom icons for rack and stand markers
         var rackIcon = L.icon({ iconUrl: 'images/icons/icon-rack.png', iconSize: [32, 32] });
         var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
+        var twotierIcon = L.icon({ iconUrl: 'images/icons/icon-twotier.png', iconSize: [32, 32] });
         // and fetch information from the overpass API
         fetch('/parking.json').then((response) => response.json()).then((json) => {
             for (var i = 0; i < json['features'].length; i++) {
                 var item = json['features'][i];
-                // skip other than stands or wall loops
+                // skip other than stands or racks or two-tiers
                 var amenity = item['properties']['bicycle_parking'];
-                if (amenity == null || !['stands', 'wall_loops'].includes(amenity)) continue;
+                if (amenity == null || !['stands', 'two-tier', 'rack'].includes(amenity)) continue;
                 // add custom marker item to indicate parking
-                var icon = amenity == 'stands' ? standIcon : rackIcon;
+                var icon = amenity == 'stands' ? standIcon : rackIcon :twotierIcon;
                 // get the coordinates and create marker
                 var mark = L.marker([item['properties']['lat'], item['properties']['lon']], { icon: icon });
                 // add capacity indicator to icon (if available)
