@@ -86,34 +86,53 @@
     <script>
         // initialize the map with leaflet.js
         var map = L.map('map', { minZoom: 10, maxZoom: 20 })
+        
         // add marker clustering for performance
         var markers = L.markerClusterGroup({ maxClusterRadius: 100 });
+        
         // center the map to show Helsinki well
         map.setView([60.2097412, 24.98643], 11);
+        
         // set the map view bounds (Desktop size)
         map.setMaxBounds(L.latLngBounds(L.latLng(60.3300069, 25.5136872), L.latLng(60.0888172, 24.4589996)));
+        
         // set the desired tiles with attribution
         L.tileLayer.provider('CartoDB.VoyagerLabelsUnder').addTo(map);
+        
         // allow asking for the user's current location
         L.control.locate().addTo(map);
+        
         // add custom icons for rack and stand markers
         var rackIcon = L.icon({ iconUrl: 'images/icons/icon-rack.png', iconSize: [32, 32] });
         var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
         var twotierIcon = L.icon({ iconUrl: 'images/icons/icon-twotier.png', iconSize: [32, 32] });
+        
         // and fetch information from the overpass API
         fetch('/parking.json').then((response) => response.json()).then((json) => {
             for (var i = 0; i < json['features'].length; i++) {
                 var item = json['features'][i];
+                
                 // skip other than stands or racks or two-tiers
                 var amenity = item['properties']['bicycle_parking'];
                 if (amenity == null || !['stands', 'two-tier', 'rack'].includes(amenity)) continue;
+                
                 // add custom marker item to indicate parking
-                var icon = amenity == 'stands' ? standIcon : rackIcon :twotierIcon;
+                var icon;
+                    if (amenity === 'stands') {
+                        icon = standIcon;
+                } else if (amenity === 'rack') {
+                        icon = rackIcon;
+                } else if (amenity === 'two-tier') {
+                        icon = twotierIcon;
+                }
+                
                 // get the coordinates and create marker
                 var mark = L.marker([item['properties']['lat'], item['properties']['lon']], { icon: icon });
+                
                 // add capacity indicator to icon (if available)
                 var capacity = item['properties']['capacity']
                 if (capacity) mark.bindTooltip(capacity, { permanent: true, direction: 'right', className: 'marker-label' });
+                
                 // finally, add the marker to the map layer
                 markers.addLayer(mark);
             }
