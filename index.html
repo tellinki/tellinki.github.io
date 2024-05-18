@@ -107,7 +107,7 @@
             onAdd: function(map) {
                 var text = L.DomUtil.create('div', 'info-text'); // Added a class for styling
                 text.id = "info_text";
-                text.innerHTML = "<strong>Aineisto päivitetty 18.5.2024. Lisätty myös kaksikerroksiset pyörätelineet uutena tyyppinä.</strong>";
+                text.innerHTML = "<strong>Aineisto päivitetty 18.5.2024. Lisätty myös kaksikerroksiset ja safe loops pyörätelineet uusina tyyppeinä.</strong>";
                 return text;
             },
             onRemove: function(map) {
@@ -131,7 +131,7 @@
                 
                 // skip other than stands or racks or two-tiers or safe_loops
                 var amenity = item['properties']['bicycle_parking'];
-                if (amenity == null || !['stands', 'safe_loops' 'two-tier', 'rack'].includes(amenity)) continue;
+                if (amenity == null || !['stands', 'safe_loops', 'two-tier', 'rack'].includes(amenity)) continue;
                 
                 // add custom marker item to indicate parking
                 var icon;
