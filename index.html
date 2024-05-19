@@ -132,16 +132,19 @@
             .then(response => response.json())
             .then(data => {
                 L.geoJSON(data, {
+                    filter: function(feature) {
+                        return feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString';
+                    },
                     onEachFeature: function(feature, layer) {
                         if (feature.properties && feature.properties.name) {
                             layer.bindPopup(feature.properties.name);
-                         }
+                        }
                     }
-                }).addTo(map);
-            })
-            .catch(error => {
-                console.error('Error loading the GeoJSON data:', error);
-            });
+            }).addTo(map);
+        })
+        .catch(error => {
+            console.error('Error loading the GeoJSON data:', error);
+        });
         
         // fetch parking information from the json
         fetch('/parking.json').then((response) => response.json()).then((json) => {
