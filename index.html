@@ -127,16 +127,21 @@
         var twotierIcon = L.icon({ iconUrl: 'images/icons/icon-twotier.png', iconSize: [32, 32] });
         var safeloopIcon = L.icon({ iconUrl: 'images/icons/icon-safeloop.png', iconSize: [32, 32] });
 
-         // fetch GeoJSON baana data and add it to the map
+        // Fetch GeoJSON baana data and add it to the map
         fetch('/baanat.geojson')
             .then(response => response.json())
             .then(data => {
                 L.geoJSON(data, {
-                    onEachFeature: onEachFeature
+                    onEachFeature: function(feature, layer) {
+                        if (feature.properties && feature.properties.name) {
+                            layer.bindPopup(feature.properties.name);
+                         }
+                    }
                 }).addTo(map);
             })
             .catch(error => {
                 console.error('Error loading the GeoJSON data:', error);
+            });
         
         // fetch parking information from the json
         fetch('/parking.json').then((response) => response.json()).then((json) => {
