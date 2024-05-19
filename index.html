@@ -4,11 +4,11 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="last-modified" content="Sat, 18 May 2024 13:12:00 GMT " />
+    <meta http-equiv="last-modified" content="Sat, 19 May 2024 09:00:00 GMT" />
     <meta http-equiv="cache-control" content="no-cache" />
     <meta http-equiv="Expires" content="600" />
     <title>Tellinki.com</title>
-    <meta name="description" content="Tellinki - Runkolukittavat pyörätelineet pääkaupunkiseudulla">
+    <meta name="description" content="Tellinki.com - Runkolukittavat pyörätelineet pääkaupunkiseudulla">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#0050aa">
     <link rel="manifest" href="manifest.json">
@@ -105,7 +105,7 @@
         // allow asking for the user's current location
         L.control.locate().addTo(map);
 
-        // add text box
+        // add info text
         L.Control.Textbox = L.Control.extend({
             onAdd: function(map) {
                 var text = L.DomUtil.create('div', 'info-text'); // Added a class for styling
@@ -126,8 +126,19 @@
         var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
         var twotierIcon = L.icon({ iconUrl: 'images/icons/icon-twotier.png', iconSize: [32, 32] });
         var safeloopIcon = L.icon({ iconUrl: 'images/icons/icon-safeloop.png', iconSize: [32, 32] });
+
+         // fetch GeoJSON baana data and add it to the map
+        fetch('/baanat.geojson')
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    onEachFeature: onEachFeature
+                }).addTo(map);
+            })
+            .catch(error => {
+                console.error('Error loading the GeoJSON data:', error);
         
-        // and fetch information from the json
+        // fetch parking information from the json
         fetch('/parking.json').then((response) => response.json()).then((json) => {
             for (var i = 0; i < json['features'].length; i++) {
                 var item = json['features'][i];
