@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="last-modified" content="Sat, 19 May 2024 09:00:00 GMT" />
+    <meta http-equiv="last-modified" content="Sun, 25 August 2024 14:00:00 GMT" />
     <meta http-equiv="cache-control" content="no-cache" />
     <meta http-equiv="Expires" content="600" />
     <title>Tellinki.com</title>
@@ -126,6 +126,7 @@
         var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
         var twotierIcon = L.icon({ iconUrl: 'images/icons/icon-twotier.png', iconSize: [32, 32] });
         var safeloopIcon = L.icon({ iconUrl: 'images/icons/icon-safeloop.png', iconSize: [32, 32] });
+        var mechIcon = L.icon({ iconUrl: 'images/icons/icon-mech.png', iconSize: [32, 32] });
 
         // Fetch GeoJSON baana data and add it to the map
         fetch('/baanat.geojson')
@@ -180,6 +181,28 @@
             // add cluster to map
             map.addLayer(markers);
         })
+
+        // fetch repair station information from the json
+        fetch('/mech.geojson').then((response) => response.json()).then((json) => {
+            for (var i = 0; i < json['features'].length; i++) {
+                var item = json['features'][i];
+                
+                // add custom marker item
+                var icon;
+                    if (amenity === 'bicycle_repair_station') {
+                        icon = mechIcon;
+                }
+                
+                // get the coordinates and create marker
+                var mark = L.marker([item['properties']['lat'], item['properties']['lon']], { icon: icon });
+                
+                // finally, add the marker to the map layer
+                markers.addLayer(mark);
+            }
+            // add cluster to map
+            map.addLayer(markers);
+        })
+        
         // register serviceWorker to allow installing as app
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js');
     </script>
