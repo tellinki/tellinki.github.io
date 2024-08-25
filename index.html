@@ -186,22 +186,28 @@
         fetch('/mech.geojson').then((response) => response.json()).then((json) => {
             for (var i = 0; i < json['features'].length; i++) {
                 var item = json['features'][i];
-                
-                // add custom marker item
+        
+                // Extract amenity type
+                var amenity = item['properties']['amenity'];
+        
+                // Set custom icon if amenity is a bicycle repair station
                 var icon;
-                    if (amenity === 'bicycle_repair_station') {
-                        icon = mechIcon;
+                if (amenity === 'bicycle_repair_station') {
+                    icon = mechIcon;
                 }
-                
-                // get the coordinates and create marker
-                var mark = L.marker([item['properties']['lat'], item['properties']['lon']], { icon: icon });
-                
-                // finally, add the marker to the map layer
-                markers.addLayer(mark);
+        
+                // Get the coordinates and create marker
+                var coordinates = item['geometry']['coordinates'];
+                var mark = L.marker([coordinates[1], coordinates[0]], { icon: icon });
+
+            // Add the marker to the markers layer
+            markers.addLayer(mark);
+                }
             }
-            // add cluster to map
-            map.addLayer(markers);
-        })
+
+            // Add the markers layer to the map
+            map.addLayer(markers);   
+        });
         
         // register serviceWorker to allow installing as app
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js');
