@@ -191,33 +191,23 @@
 
         // Fetch repair station information from the JSON file
         fetch('/mech.geojson')
-            .then(response => response.json())  // Parse the JSON response
-            .then(data => {
-                // Create a markers layer group
-                var markers = L.layerGroup();
+            .then(response => response.json()) 
+            .then(mechData => {
+                // Create a markers layer group for the repair stations
+                var mechMarkers = L.layerGroup();
 
                 // Loop through each feature in the GeoJSON
-                data.features.forEach(item => {
-                    // Extract the amenity type
-                    var amenity = item['properties']['amenity'];
-
-                    // Set custom icon if amenity is a bicycle repair station
-                    var icon;
-                    if (amenity === 'bicycle_repair_station') {
-                        icon = mechIcon;
-                    }
-
-                    // Get the coordinates and create a marker
-                    var coordinates = item['geometry']['coordinates'];
-                    var mark = L.marker([coordinates[1], coordinates[0]], { icon: icon });
-
-                    // Add the marker to the markers layer
-                    markers.addLayer(mark);
+                mechData.features.forEach(mechItem => {
+                    // Create a marker with the custom icon for the repair station
+                    var mechMarker = L.marker([mechItem.geometry.coordinates[1], mechItem.geometry.coordinates[0]], { icon: mechIcon });
+            
+                    // Add the marker to the repair stations markers layer group
+                    mechMarkers.addLayer(mechMarker);
                 });
-
-                // Add the markers layer to the map
-                map.addLayer(markers);
-            })
+        
+                // Add the repair stations markers layer group to the map
+                mechMarkers.addTo(map);
+            });
             .catch(error => console.error('Error fetching the GeoJSON:', error));  // Handle errors
 
         // register serviceWorker to allow installing as app
