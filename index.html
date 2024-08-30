@@ -188,26 +188,6 @@
             // add cluster to map
             map.addLayer(markers);
         })
-
-        // Fetch repair station information from the JSON file
-        fetch('/mech.geojson')
-            .then(response => response.json()) 
-            .then(mechData => {
-                // Create a markers layer group for the repair stations
-                var mechMarkers = L.layerGroup();
-
-                // Loop through each feature in the GeoJSON
-                mechData.features.forEach(mechItem => {
-                    // Create a marker with the custom icon for the repair station
-                    var mechMarker = L.marker([mechItem.geometry.coordinates[1], mechItem.geometry.coordinates[0]], { icon: mechIcon });
-            
-                    // Add the marker to the repair stations markers layer group
-                    mechMarkers.addLayer(mechMarker);
-                });
-        
-                // Add the repair stations markers layer group to the map
-                mechMarkers.addTo(map);
-            });
             .catch(error => console.error('Error fetching the GeoJSON:', error));  // Handle errors
 
         // register serviceWorker to allow installing as app
