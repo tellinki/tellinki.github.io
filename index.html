@@ -133,7 +133,7 @@
         var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
         var twotierIcon = L.icon({ iconUrl: 'images/icons/icon-twotier.png', iconSize: [32, 32] });
         var safeloopIcon = L.icon({ iconUrl: 'images/icons/icon-safeloop.png', iconSize: [32, 32] });
-        var mechIcon = L.icon({ iconUrl: 'images/icons/icon-mech.png', iconSize: [32, 32] });
+        var mechIcon = L.icon({ iconUrl: 'images/icons/icon-mech.png', iconSize: [16, 16] });
 
         // Fetch mechanical repair points
         fetch('/mech.geojson')
@@ -149,7 +149,32 @@
 
                         // Return a marker with the custom icon
                         return L.marker(latLng, { icon: mechIcon });
-                    }
+
+                        // Create the popup content based on properties
+                        var popupContent = `<b>Palvelut:</b> ${feature.properties.amenity}<br>`;
+
+                        // Manually map each service key to Finnish name
+                        var services = {
+                            "service:bicycle:chain_tool": "Ketjutyökalu",
+                            "service:bicycle:cleaning": "Pesupaikka",
+                            "service:bicycle:diy": "Työkalut",
+                            "service:bicycle:pump": "Pumppu",
+                            "service:bicycle:screwdriver": "Ruuvimeisseli",
+                            "service:bicycle:stand": "Teline",
+                            "service:bicycle:tools": "Työkalut"
+                        };
+
+                        // Loop through the services and add to popup content if available
+                        for (var service in services) {
+                            if (feature.properties[service] === "yes") {
+                                popupContent += `✔ ${services[service]} saatavilla<br>`;
+                            }
+                        }
+
+                        // Bind the popup to the marker
+                        marker.bindPopup(popupContent);
+                            }
+                    
                 }).addTo(map);
             })
             .catch(error => console.error('Error loading the GeoJSON file:', error));
