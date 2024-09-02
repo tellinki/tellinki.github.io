@@ -147,6 +147,9 @@
                         // Create a latLng object
                         var latLng = L.latLng(lat, lon);
 
+                        // Create the marker with the custom icon
+                        var marker = L.marker(latLng, { icon: mechIcon });
+
                         // Create the popup content based on properties
                         var popupContent = `<b>Palvelut:</b> ${feature.properties.amenity}<br>`;
 
@@ -171,10 +174,9 @@
                         // Bind the popup to the marker
                         marker.bindPopup(popupContent);
 
-                        // Return a marker with the custom icon
-                        return L.marker(latLng, { icon: mechIcon });
-                            }
-                    
+                        // Return the marker with the popup bound
+                        return marker;
+                    }
                 }).addTo(map);
             })
             .catch(error => console.error('Error loading the GeoJSON file:', error));
