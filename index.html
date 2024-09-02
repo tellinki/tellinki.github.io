@@ -135,6 +135,25 @@
         var safeloopIcon = L.icon({ iconUrl: 'images/icons/icon-safeloop.png', iconSize: [32, 32] });
         var mechIcon = L.icon({ iconUrl: 'images/icons/icon-mech.png', iconSize: [32, 32] });
 
+        // Fetch mechanical repair points
+        fetch('/mech.geojson')
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    pointToLayer: function (feature, latlng) {
+                        var lat = feature.properties.lat;
+                        var lon = feature.properties.lon;
+
+                        // Create a latLng object
+                        var latLng = L.latLng(lat, lon);
+
+                        // Return a marker with the custom icon
+                        return L.marker(latLng, { icon: mechIcon });
+                    }
+                }).addTo(map);
+            })
+            .catch(error => console.error('Error loading the GeoJSON file:', error));
+
         // Fetch GeoJSON baana data and add it to the map
         fetch('/baanat.geojson')
             .then(response => response.json())
