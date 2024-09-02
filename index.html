@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -14,24 +13,24 @@
     <meta name="theme-color" content="#0050aa">
     <link rel="manifest" href="manifest.json">
     
-    <!--Android-->
+    <!-- Android -->
     <meta name="mobile-web-app-capable" content="yes">
     <link rel="icon" sizes="192x192" href="images/icons/icon-192x192.png">
     <link rel="icon" sizes="512x512" href="images/icons/icon-512x512.png">
     
-    <!--iOS-->
+    <!-- iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Tellinki.com">
     <link rel="apple-touch-icon-precomposed" href="images/icons/icon-512x512.png">
     <link rel="mask-icon" href="images/icons/desktop/safari-pinned-tab.svg" color="#5bbad5">
     
-    <!--MS-->
+    <!-- MS -->
     <meta name="msapplication-tap-highlight" content="no">
     <meta name="msapplication-TileImage" content="images/icons/icon-150x150.png">
     <meta name="msapplication-TileColor" content="#0050aa">
     
-    <!--Favicon-->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="images/icons/icon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="images/icons/icon-16x16.png">
     
@@ -86,55 +85,59 @@
     <script src="js/leaflet-providers.min.js"></script>
     <script src="js/L.Control.Locate.min.js"></script>
 </head>
-
 <body>
     <main>
         <div id="map"></div>
     </main>
     <noscript>Turn on JavaScript to access this site content.</noscript>
     <script>
-        
-        // initialize the map with leaflet.js
-        var map = L.map('map', { minZoom: 10, maxZoom: 20 })
+        // Initialize the map with Leaflet
+        var map = L.map('map', { minZoom: 10, maxZoom: 20 });
 
-        // add marker clustering for performance
-        var markers = L.markerClusterGroup({ maxClusterRadius: 200, disableClusteringAtZoom: 18, spiderfy_on_max_zoom: false });
-
-        // center the map to show Helsinki well
+        // Center the map to show Helsinki well
         map.setView([60.2097412, 24.98643], 11);
 
-        // set the map view bounds (Desktop size)
+        // Set the map view bounds (Desktop size)
         map.setMaxBounds(L.latLngBounds(L.latLng(60.3300069, 25.5136872), L.latLng(60.0888172, 24.4589996)));
 
-        // set the desired tiles with attribution
+        // Set the desired tiles with attribution
         L.tileLayer.provider('CartoDB.VoyagerLabelsUnder').addTo(map);
 
-        // allow asking for the user's current location
+        // Allow asking for the user's current location
         L.control.locate().addTo(map);
 
-        // add info text
+        // Add info text
         L.Control.Textbox = L.Control.extend({
             onAdd: function(map) {
-                var text = L.DomUtil.create('div', 'info-text'); // Added a class for styling
+                var text = L.DomUtil.create('div', 'info-text'); 
                 text.id = "info_text";
                 text.innerHTML = "<strong>Aineisto päivitetty 02.09.2024. Lisätty pyöräkorjaus- ja vesipisteet. Ylläpitäjä Tommi Hautala (palaute@tellinki.com), aineistoa voi muokata OpenStreetMapin kautta.</strong>";
                 return text;
             },
-            onRemove: function(map) {
-            }
+            onRemove: function(map) {}
         });
         L.control.textbox = function(opts) {
             return new L.Control.Textbox(opts);
         };
         L.control.textbox({ position: 'bottomleft' }).addTo(map);
 
-        // add custom icons for rack and stand markers
+        // Add custom icons
         var rackIcon = L.icon({ iconUrl: 'images/icons/icon-rack.png', iconSize: [32, 32] });
         var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
         var twotierIcon = L.icon({ iconUrl: 'images/icons/icon-twotier.png', iconSize: [32, 32] });
         var safeloopIcon = L.icon({ iconUrl: 'images/icons/icon-safeloop.png', iconSize: [32, 32] });
         var mechIcon = L.icon({ iconUrl: 'images/icons/icon-mech.png', iconSize: [16, 16] });
         var waterIcon = L.icon({ iconUrl: 'images/icons/icon-water.png', iconSize: [16, 16] });
+
+        // Create layers for GeoJSON data
+        var mechLayer = L.geoJSON(null);
+        var waterLayer = L.geoJSON(null);
+        var baanatLayer = L.geoJSON(null);
+        var parkingLayer = L.markerClusterGroup({
+            maxClusterRadius: 200,
+            disableClusteringAtZoom: 17,
+            spiderfy_on_max_zoom: false
+        });
 
         // Fetch mechanical repair points
         fetch('/mech.geojson')
@@ -144,17 +147,10 @@
                     pointToLayer: function (feature, latlng) {
                         var lat = feature.properties.lat;
                         var lon = feature.properties.lon;
-
-                        // Create a latLng object
                         var latLng = L.latLng(lat, lon);
-
-                        // Create the marker with the custom icon
                         var marker = L.marker(latLng, { icon: mechIcon });
 
-                        // Create the popup content based on properties
                         var popupContent = `<b>Palvelut:</b> <br>`;
-
-                        // Manually map each service key to Finnish name
                         var services = {
                             "service:bicycle:chain_tool": "Ketjutyökalu",
                             "service:bicycle:cleaning": "Pesupaikka",
@@ -164,21 +160,15 @@
                             "service:bicycle:stand": "Teline",
                             "service:bicycle:tools": "Työkalut"
                         };
-
-                        // Loop through the services and add to popup content if available
                         for (var service in services) {
                             if (feature.properties[service] === "yes") {
                                 popupContent += `✔ ${services[service]} saatavilla<br>`;
                             }
                         }
-
-                        // Bind the popup to the marker
                         marker.bindPopup(popupContent);
-
-                        // Return the marker with the popup bound
                         return marker;
                     }
-                }).addTo(map);
+                }).addTo(mechLayer);
             })
             .catch(error => console.error('Error loading the GeoJSON file:', error));
 
@@ -190,21 +180,15 @@
                     pointToLayer: function (feature, latlng) {
                         var lat = feature.properties.lat;
                         var lon = feature.properties.lon;
-
-                        // Create a latLng object
                         var latLng = L.latLng(lat, lon);
-
-                        // Create the marker with the custom icon
                         var marker = L.marker(latLng, { icon: waterIcon });
-
-                        // Return the marker with the popup bound
                         return marker;
                     }
-                }).addTo(map);
+                }).addTo(waterLayer);
             })
             .catch(error => console.error('Error loading the GeoJSON file:', error));
 
-        // Fetch GeoJSON baana data and add it to the map
+        // Fetch GeoJSON baana lines
         fetch('/baanat.geojson')
             .then(response => response.json())
             .then(data => {
@@ -217,51 +201,53 @@
                             layer.bindPopup(feature.properties.name);
                         }
                     }
-            }).addTo(map);
-        })
-        .catch(error => {
-            console.error('Error loading the GeoJSON data:', error);
-        });
+                }).addTo(baanatLayer);
+            })
+            .catch(error => console.error('Error loading the GeoJSON data:', error));
 
-        // fetch parking information from the json
-        fetch('/parking.json').then((response) => response.json()).then((json) => {
-            for (var i = 0; i < json['features'].length; i++) {
-                var item = json['features'][i];
+        // Fetch parking points
+        fetch('/parking.json')
+            .then(response => response.json())
+            .then(json => {
+                json['features'].forEach(item => {
+                    var amenity = item['properties']['bicycle_parking'];
+                    if (amenity == null || !['stands', 'safe_loops', 'two-tier', 'rack'].includes(amenity)) return;
 
-                // skip other than stands or racks or two-tiers or safe_loops
-                var amenity = item['properties']['bicycle_parking'];
-                if (amenity == null || !['stands', 'safe_loops', 'two-tier', 'rack'].includes(amenity)) continue;
-
-                // add custom marker item to indicate parking
-                var icon;
+                    var icon;
                     if (amenity === 'stands') {
                         icon = standIcon;
-                } else if (amenity === 'rack') {
+                    } else if (amenity === 'rack') {
                         icon = rackIcon;
-                } else if (amenity === 'safe_loops') {
+                    } else if (amenity === 'safe_loops') {
                         icon = safeloopIcon;
-                } else if (amenity === 'two-tier') {
+                    } else if (amenity === 'two-tier') {
                         icon = twotierIcon;
-                }
+                    }
 
-                // get the coordinates and create marker
-                var mark = L.marker([item['properties']['lat'], item['properties']['lon']], { icon: icon });
+                    var mark = L.marker([item['properties']['lat'], item['properties']['lon']], { icon: icon });
+                    var capacity = item['properties']['capacity'];
+                    if (capacity) {
+                        mark.bindTooltip(capacity, { permanent: true, direction: 'right', className: 'marker-label' });
+                    }
+                    parkingLayer.addLayer(mark);
+                });
+                map.addLayer(parkingLayer);
+            })
+            .catch(error => console.error('Error fetching the GeoJSON:', error));
 
-                // add capacity indicator to icon (if available)
-                var capacity = item['properties']['capacity']
-                if (capacity) mark.bindTooltip(capacity, { permanent: true, direction: 'right', className: 'marker-label' });
+        // Add layer control
+        var overlays = {
+            "Huoltopisteet": mechLayer,
+            "Vesipisteet": waterLayer,
+            "Baanat": baanatLayer,
+            "Runkolukittavat telineet": parkingLayer
+        };
+        L.control.layers(null, overlays).addTo(map);
 
-                // finally, add the marker to the map layer
-                markers.addLayer(mark);
-            }
-            // add cluster to map
-            map.addLayer(markers);
-        })
-            .catch(error => console.error('Error fetching the GeoJSON:', error));  // Handle errors
-
-        // register serviceWorker to allow installing as app
-        if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js');
+        // Register service worker to allow installing as app
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
     </script>
 </body>
-
 </html>
