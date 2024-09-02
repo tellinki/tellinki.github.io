@@ -1,253 +1,162 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="last-modified" content="Sun, 25 August 2024 14:00:00 GMT" />
-    <meta http-equiv="cache-control" content="no-cache" />
-    <meta http-equiv="Expires" content="600" />
-    
-    <title>Tellinki.com</title>
-    <meta name="description" content="Tellinki.com - Runkolukittavat pyörätelineet pääkaupunkiseudulla">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0050aa">
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- Android -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <link rel="icon" sizes="192x192" href="images/icons/icon-192x192.png">
-    <link rel="icon" sizes="512x512" href="images/icons/icon-512x512.png">
-    
-    <!-- iOS -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="Tellinki.com">
-    <link rel="apple-touch-icon-precomposed" href="images/icons/icon-512x512.png">
-    <link rel="mask-icon" href="images/icons/desktop/safari-pinned-tab.svg" color="#5bbad5">
-    
-    <!-- MS -->
-    <meta name="msapplication-tap-highlight" content="no">
-    <meta name="msapplication-TileImage" content="images/icons/icon-150x150.png">
-    <meta name="msapplication-TileColor" content="#0050aa">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="images/icons/icon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="images/icons/icon-16x16.png">
-    
-    <!-- Leaflet -->
-    <link rel="stylesheet" href="css/normalize.min.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
-    <link rel="stylesheet" href="css/L.Control.Locate.min.css" />
-    <style>
-        #map {
-            height: 100vh;
-            width: 100vw;
-        }
+<script>
+    // Initialize the map with Leaflet
+    var map = L.map('map', { minZoom: 10, maxZoom: 20 });
 
-        .marker-cluster-small,
-        .marker-cluster-medium,
-        .marker-cluster-large {
-            background-color: rgba(0, 80, 170, 0.2);
-        }
+    // Center the map to show Helsinki well
+    map.setView([60.2097412, 24.98643], 11);
 
-        .marker-cluster-small div,
-        .marker-cluster-medium div,
-        .marker-cluster-large div {
-            color: #FFF;
-            background-color: #0050aa;
-        }
+    // Set the map view bounds (Desktop size)
+    map.setMaxBounds(L.latLngBounds(L.latLng(60.3300069, 25.5136872), L.latLng(60.0888172, 24.4589996)));
 
-        .leaflet-tooltip-right:before {
-            border: 0px;
-        }
+    // Set the desired tiles with attribution
+    L.tileLayer.provider('CartoDB.VoyagerLabelsUnder').addTo(map);
 
-        .leaflet-tooltip.marker-label {
-            top: -16px;
-            font-size: 10px;
-            font-weight: bold;
-            text-align: center;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            margin: 0px;
-            padding: 4px;
-            line-height: 1.8;
-            color: #0050aa;
-            background-color: #FFF;
-        }
-    </style>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-    <script src="js/leaflet-providers.min.js"></script>
-    <script src="js/L.Control.Locate.min.js"></script>
-</head>
-<body>
-    <main>
-        <div id="map"></div>
-    </main>
-    <noscript>Turn on JavaScript to access this site content.</noscript>
-    <script>
-        // Initialize the map with Leaflet
-        var map = L.map('map', { minZoom: 10, maxZoom: 20 });
+    // Allow asking for the user's current location
+    L.control.locate().addTo(map);
 
-        // Center the map to show Helsinki well
-        map.setView([60.2097412, 24.98643], 11);
+    // Add info text
+    L.Control.Textbox = L.Control.extend({
+        onAdd: function(map) {
+            var text = L.DomUtil.create('div', 'info-text');
+            text.id = "info_text";
+            text.innerHTML = "<strong>Aineisto päivitetty 02.09.2024. Lisätty pyöräkorjaus- ja vesipisteet. Ylläpitäjä Tommi Hautala (palaute@tellinki.com), aineistoa voi muokata OpenStreetMapin kautta.</strong>";
+            return text;
+        },
+        onRemove: function(map) {}
+    });
+    L.control.textbox = function(opts) {
+        return new L.Control.Textbox(opts);
+    };
+    L.control.textbox({ position: 'bottomleft' }).addTo(map);
 
-        // Set the map view bounds (Desktop size)
-        map.setMaxBounds(L.latLngBounds(L.latLng(60.3300069, 25.5136872), L.latLng(60.0888172, 24.4589996)));
+    // Add custom icons for markers
+    var rackIcon = L.icon({ iconUrl: 'images/icons/icon-rack.png', iconSize: [32, 32] });
+    var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
+    var twotierIcon = L.icon({ iconUrl: 'images/icons/icon-twotier.png', iconSize: [32, 32] });
+    var safeloopIcon = L.icon({ iconUrl: 'images/icons/icon-safeloop.png', iconSize: [32, 32] });
+    var mechIcon = L.icon({ iconUrl: 'images/icons/icon-mech.png', iconSize: [16, 16] });
+    var waterIcon = L.icon({ iconUrl: 'images/icons/icon-water.png', iconSize: [16, 16] });
 
-        // Set the desired tiles with attribution
-        L.tileLayer.provider('CartoDB.VoyagerLabelsUnder').addTo(map);
+    // Create layers for GeoJSON data
+    var mechLayer = L.geoJSON(null);
+    var waterLayer = L.geoJSON(null);
+    var baanatLayer = L.geoJSON(null);
+    var parkingLayer = L.markerClusterGroup({
+        maxClusterRadius: 200,
+        disableClusteringAtZoom: 17,
+        spiderfy_on_max_zoom: false
+    });
 
-        // Allow asking for the user's current location
-        L.control.locate().addTo(map);
+    // Fetch mechanical repair points
+    fetch('/mech.geojson')
+        .then(response => response.json())
+        .then(data => {
+            L.geoJSON(data, {
+                pointToLayer: function (feature, latlng) {
+                    var lat = feature.properties.lat;
+                    var lon = feature.properties.lon;
+                    var latLng = L.latLng(lat, lon);
+                    var marker = L.marker(latLng, { icon: mechIcon });
 
-        // Add info text
-        L.Control.Textbox = L.Control.extend({
-            onAdd: function(map) {
-                var text = L.DomUtil.create('div', 'info-text'); 
-                text.id = "info_text";
-                text.innerHTML = "<strong>Aineisto päivitetty 02.09.2024. Lisätty pyöräkorjaus- ja vesipisteet. Ylläpitäjä Tommi Hautala (palaute@tellinki.com), aineistoa voi muokata OpenStreetMapin kautta.</strong>";
-                return text;
-            },
-            onRemove: function(map) {}
-        });
-        L.control.textbox = function(opts) {
-            return new L.Control.Textbox(opts);
-        };
-        L.control.textbox({ position: 'bottomleft' }).addTo(map);
-
-        // Add custom icons
-        var rackIcon = L.icon({ iconUrl: 'images/icons/icon-rack.png', iconSize: [32, 32] });
-        var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
-        var twotierIcon = L.icon({ iconUrl: 'images/icons/icon-twotier.png', iconSize: [32, 32] });
-        var safeloopIcon = L.icon({ iconUrl: 'images/icons/icon-safeloop.png', iconSize: [32, 32] });
-        var mechIcon = L.icon({ iconUrl: 'images/icons/icon-mech.png', iconSize: [16, 16] });
-        var waterIcon = L.icon({ iconUrl: 'images/icons/icon-water.png', iconSize: [16, 16] });
-
-        // Create layers for GeoJSON data
-        var mechLayer = L.geoJSON(null);
-        var waterLayer = L.geoJSON(null);
-        var baanatLayer = L.geoJSON(null);
-        var parkingLayer = L.markerClusterGroup({
-            maxClusterRadius: 200,
-            disableClusteringAtZoom: 17,
-            spiderfy_on_max_zoom: false
-        });
-
-        // Fetch mechanical repair points
-        fetch('/mech.geojson')
-            .then(response => response.json())
-            .then(data => {
-                L.geoJSON(data, {
-                    pointToLayer: function (feature, latlng) {
-                        var lat = feature.properties.lat;
-                        var lon = feature.properties.lon;
-                        var latLng = L.latLng(lat, lon);
-                        var marker = L.marker(latLng, { icon: mechIcon });
-
-                        var popupContent = `<b>Palvelut:</b> <br>`;
-                        var services = {
-                            "service:bicycle:chain_tool": "Ketjutyökalu",
-                            "service:bicycle:cleaning": "Pesupaikka",
-                            "service:bicycle:diy": "Työkalut",
-                            "service:bicycle:pump": "Pumppu",
-                            "service:bicycle:screwdriver": "Ruuvimeisseli",
-                            "service:bicycle:stand": "Teline",
-                            "service:bicycle:tools": "Työkalut"
-                        };
-                        for (var service in services) {
-                            if (feature.properties[service] === "yes") {
-                                popupContent += `✔ ${services[service]} saatavilla<br>`;
-                            }
-                        }
-                        marker.bindPopup(popupContent);
-                        return marker;
-                    }
-                }).addTo(mechLayer);
-            })
-            .catch(error => console.error('Error loading the GeoJSON file:', error));
-
-        // Fetch water points
-        fetch('/water.geojson')
-            .then(response => response.json())
-            .then(data => {
-                L.geoJSON(data, {
-                    pointToLayer: function (feature, latlng) {
-                        var lat = feature.properties.lat;
-                        var lon = feature.properties.lon;
-                        var latLng = L.latLng(lat, lon);
-                        var marker = L.marker(latLng, { icon: waterIcon });
-                        return marker;
-                    }
-                }).addTo(waterLayer);
-            })
-            .catch(error => console.error('Error loading the GeoJSON file:', error));
-
-        // Fetch GeoJSON baana lines
-        fetch('/baanat.geojson')
-            .then(response => response.json())
-            .then(data => {
-                L.geoJSON(data, {
-                    filter: function(feature) {
-                        return feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString';
-                    },
-                    onEachFeature: function(feature, layer) {
-                        if (feature.properties && feature.properties.name) {
-                            layer.bindPopup(feature.properties.name);
+                    var popupContent = `<b>Palvelut:</b> <br>`;
+                    var services = {
+                        "service:bicycle:chain_tool": "Ketjutyökalu",
+                        "service:bicycle:cleaning": "Pesupaikka",
+                        "service:bicycle:diy": "Työkalut",
+                        "service:bicycle:pump": "Pumppu",
+                        "service:bicycle:screwdriver": "Ruuvimeisseli",
+                        "service:bicycle:stand": "Teline",
+                        "service:bicycle:tools": "Työkalut"
+                    };
+                    for (var service in services) {
+                        if (feature.properties[service] === "yes") {
+                            popupContent += `✔ ${services[service]} saatavilla<br>`;
                         }
                     }
-                }).addTo(baanatLayer);
-            })
-            .catch(error => console.error('Error loading the GeoJSON data:', error));
+                    marker.bindPopup(popupContent);
+                    return marker;
+                }
+            }).addTo(mechLayer);
+            map.addLayer(mechLayer); // Add layer to map
+        })
+        .catch(error => console.error('Error loading the GeoJSON file:', error));
 
-        // Fetch parking points
-        fetch('/parking.json')
-            .then(response => response.json())
-            .then(json => {
-                json['features'].forEach(item => {
-                    var amenity = item['properties']['bicycle_parking'];
-                    if (amenity == null || !['stands', 'safe_loops', 'two-tier', 'rack'].includes(amenity)) return;
+    // Fetch water points
+    fetch('/water.geojson')
+        .then(response => response.json())
+        .then(data => {
+            L.geoJSON(data, {
+                pointToLayer: function (feature, latlng) {
+                    var lat = feature.properties.lat;
+                    var lon = feature.properties.lon;
+                    var latLng = L.latLng(lat, lon);
+                    var marker = L.marker(latLng, { icon: waterIcon });
+                    return marker;
+                }
+            }).addTo(waterLayer);
+            map.addLayer(waterLayer); // Add layer to map
+        })
+        .catch(error => console.error('Error loading the GeoJSON file:', error));
 
-                    var icon;
-                    if (amenity === 'stands') {
-                        icon = standIcon;
-                    } else if (amenity === 'rack') {
-                        icon = rackIcon;
-                    } else if (amenity === 'safe_loops') {
-                        icon = safeloopIcon;
-                    } else if (amenity === 'two-tier') {
-                        icon = twotierIcon;
+    // Fetch GeoJSON baana data and add it to the map
+    fetch('/baanat.geojson')
+        .then(response => response.json())
+        .then(data => {
+            L.geoJSON(data, {
+                filter: function(feature) {
+                    return feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString';
+                },
+                onEachFeature: function(feature, layer) {
+                    if (feature.properties && feature.properties.name) {
+                        layer.bindPopup(feature.properties.name);
                     }
+                }
+            }).addTo(baanatLayer);
+            map.addLayer(baanatLayer); // Add layer to map
+        })
+        .catch(error => console.error('Error loading the GeoJSON data:', error));
 
-                    var mark = L.marker([item['properties']['lat'], item['properties']['lon']], { icon: icon });
-                    var capacity = item['properties']['capacity'];
-                    if (capacity) {
-                        mark.bindTooltip(capacity, { permanent: true, direction: 'right', className: 'marker-label' });
-                    }
-                    parkingLayer.addLayer(mark);
-                });
-                map.addLayer(parkingLayer);
-            })
-            .catch(error => console.error('Error fetching the GeoJSON:', error));
+    // Fetch parking information from the json
+    fetch('/parking.json')
+        .then(response => response.json())
+        .then(json => {
+            json['features'].forEach(item => {
+                var amenity = item['properties']['bicycle_parking'];
+                if (amenity == null || !['stands', 'safe_loops', 'two-tier', 'rack'].includes(amenity)) return;
 
-        // Add layer control
-        var overlays = {
-            "Huoltopisteet": mechLayer,
-            "Vesipisteet": waterLayer,
-            "Baanat": baanatLayer,
-            "Runkolukittavat telineet": parkingLayer
-        };
-        L.control.layers(null, overlays).addTo(map);
+                var icon;
+                if (amenity === 'stands') {
+                    icon = standIcon;
+                } else if (amenity === 'rack') {
+                    icon = rackIcon;
+                } else if (amenity === 'safe_loops') {
+                    icon = safeloopIcon;
+                } else if (amenity === 'two-tier') {
+                    icon = twotierIcon;
+                }
 
-        // Register service worker to allow installing as app
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js');
-        }
-    </script>
-</body>
-</html>
+                var mark = L.marker([item['properties']['lat'], item['properties']['lon']], { icon: icon });
+                var capacity = item['properties']['capacity'];
+                if (capacity) {
+                    mark.bindTooltip(capacity, { permanent: true, direction: 'right', className: 'marker-label' });
+                }
+                parkingLayer.addLayer(mark);
+            });
+            map.addLayer(parkingLayer); // Add layer to map
+        })
+        .catch(error => console.error('Error fetching the GeoJSON:', error));
+
+    // Add layer control
+    var overlays = {
+        "Huoltopisteet": mechLayer,
+        "Vesipisteet": waterLayer,
+        "Baanat": baanatLayer,
+        "Runkolukittavat telineet": parkingLayer
+    };
+    L.control.layers(null, overlays).addTo(map);
+
+    // Register service worker to allow installing as app
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js');
+    }
+</script>
