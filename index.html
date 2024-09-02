@@ -117,7 +117,7 @@
             onAdd: function(map) {
                 var text = L.DomUtil.create('div', 'info-text'); // Added a class for styling
                 text.id = "info_text";
-                text.innerHTML = "<strong>Aineisto päivitetty 25.08.2024. Ylläpitäjä Tommi Hautala, palaute@tellinki.com</strong>";
+                text.innerHTML = "<strong>Aineisto päivitetty 02.09.2024. Lisätty pyöräkorjaus- ja vesipisteet. Ylläpitäjä Tommi Hautala (palaute@tellinki.com), aineistoa voi muokata OpenStreetMapin kautta.</strong>";
                 return text;
             },
             onRemove: function(map) {
@@ -134,6 +134,7 @@
         var twotierIcon = L.icon({ iconUrl: 'images/icons/icon-twotier.png', iconSize: [32, 32] });
         var safeloopIcon = L.icon({ iconUrl: 'images/icons/icon-safeloop.png', iconSize: [32, 32] });
         var mechIcon = L.icon({ iconUrl: 'images/icons/icon-mech.png', iconSize: [16, 16] });
+        var waterIcon = L.icon({ iconUrl: 'images/icons/icon-water.png', iconSize: [16, 16] });
 
         // Fetch mechanical repair points
         fetch('/mech.geojson')
@@ -173,6 +174,28 @@
 
                         // Bind the popup to the marker
                         marker.bindPopup(popupContent);
+
+                        // Return the marker with the popup bound
+                        return marker;
+                    }
+                }).addTo(map);
+            })
+            .catch(error => console.error('Error loading the GeoJSON file:', error));
+
+        // Fetch water points
+        fetch('/water.geojson')
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    pointToLayer: function (feature, latlng) {
+                        var lat = feature.properties.lat;
+                        var lon = feature.properties.lon;
+
+                        // Create a latLng object
+                        var latLng = L.latLng(lat, lon);
+
+                        // Create the marker with the custom icon
+                        var marker = L.marker(latLng, { icon: waterIcon });
 
                         // Return the marker with the popup bound
                         return marker;
