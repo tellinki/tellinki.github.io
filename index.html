@@ -212,16 +212,23 @@
                     filter: function(feature) {
                         return feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString';
                     },
+                    style: function(feature) {
+                        return {
+                            color: "##a54acb",  
+                            weight: 8,         
+                            opacity: 0      
+                        };
+                    },
                     onEachFeature: function(feature, layer) {
                         if (feature.properties && feature.properties.name) {
-                            layer.bindPopup(feature.properties.name);
+                    layer.bindPopup(feature.properties.name);
                         }
                     }
-            }).addTo(map);
-        })
-        .catch(error => {
-            console.error('Error loading the GeoJSON data:', error);
-        });
+                }).addTo(map);
+            })
+            .catch(error => {
+                console.error('Error loading the GeoJSON data:', error);
+            });
 
         // fetch parking information from the json
         fetch('/parking.json').then((response) => response.json()).then((json) => {
