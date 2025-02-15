@@ -95,13 +95,13 @@
     <script>
         
         // initialize the map with leaflet.js
-        var map = L.map('map', { minZoom: 10, maxZoom: 18 })
+        var map = L.map('map', { minZoom: 12, maxZoom: 18 })
 
         // add marker clustering for performance
         var markers = L.markerClusterGroup({ maxClusterRadius: 200, disableClusteringAtZoom: 17, spiderfy_on_max_zoom: false });
 
         // center the map to show Helsinki well
-        map.setView([60.2097412, 24.98643], 11);
+        map.setView([60.2097412, 24.98643], 10);
 
         // set the map view bounds (Desktop size)
         map.setMaxBounds(L.latLngBounds(L.latLng(60.3300069, 25.5136872), L.latLng(60.0888172, 24.4589996)));
