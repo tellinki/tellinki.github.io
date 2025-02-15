@@ -204,24 +204,30 @@
             })
             .catch(error => console.error('Error loading the GeoJSON file:', error));
 
-        // Fetch GeoJSON baana data and add it to the map
         fetch('/baanat.geojson')
-            .then(response => response.json())
-            .then(data => {
-                L.geoJSON(data, {
-                    filter: function(feature) {
-                        return feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString';
-                    },
-                    onEachFeature: function(feature, layer) {
-                        if (feature.properties && feature.properties.name) {
-                            layer.bindPopup(feature.properties.name);
-                        }
-                    }
-            }).addTo(map);
-        })
-        .catch(error => {
-            console.error('Error loading the GeoJSON data:', error);
-        });
+    .then(response => response.json())
+    .then(data => {
+        L.geoJSON(data, {
+            filter: function(feature) {
+                return feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString';
+            },
+            style: function(feature) {
+                return {
+                    color: "#a952ce",
+                    weight: 8,
+                    opacity: 0.1 
+                };
+            },
+            onEachFeature: function(feature, layer) {
+                if (feature.properties && feature.properties.name) {
+                    layer.bindPopup(feature.properties.name);
+                }
+            }
+        }).addTo(map);
+    })
+    .catch(error => {
+        console.error('Error loading the GeoJSON data:', error);
+    });
 
         // fetch parking information from the json
         fetch('/parking.json').then((response) => response.json()).then((json) => {
