@@ -211,9 +211,9 @@
             .then(data => {
                 // Function to determine line width based on zoom level
                 function getLineWidth(zoom) {
-                    if (zoom >= 15) return 8;  // Wider at high zoom levels
-                    if (zoom >= 12) return 6;
-                    if (zoom >= 10) return 4;
+                    if (zoom >= 15) return 6;  // Wider at high zoom levels
+                    if (zoom >= 12) return 4;
+                    if (zoom >= 10) return 2;
                     return 2;  // Thin at low zoom levels
                 }
 
