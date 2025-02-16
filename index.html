@@ -244,22 +244,36 @@
                     opacity: 1 
                 };
             },
-            onEachFeature: function(feature, layer) {
-                if (feature.properties && feature.properties.ref) {
+            
+        onEachFeature: function(feature, layer) {
+        if (feature.properties) {
+        // Show name when hovering (tooltip)
+        if (feature.properties.name) {
+            layer.bindTooltip(feature.properties.name, {
+                permanent: false, // Only show when hovering
+                direction: "center",
+                className: "line-tooltip"
+            });
+        }
+
+        // Add ref number at midpoint
+            if (feature.properties.ref) {
                     const midpoint = getLineMidpoint(feature.geometry.coordinates);
-                    
+
                     if (midpoint) {
                         const icon = L.divIcon({
                             className: 'road-icon',
                             html: `<div class="road-shield">${feature.properties.ref}</div>`,
-                            iconSize: [24, 24],  // Size of the circle
-                            iconAnchor: [12, 12] // Center the icon
+                            iconSize: [24, 24],
+                            iconAnchor: [12, 12]
                         });
 
                         L.marker([midpoint[1], midpoint[0]], { icon }).addTo(map);
                     }
                 }
             }
+        }
+
         }).addTo(map);
 
         map.on('zoomend', function() {
