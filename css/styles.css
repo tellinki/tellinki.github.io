@@ -1,0 +1,19 @@
+<head>
+    <style>
+        .road-shield {
+            background: yellow;
+            border: 2px solid black;
+            color: black;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            line-height: 20px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%; /* Makes it a circle */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
