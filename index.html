@@ -36,12 +36,13 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/icons/icon-16x16.png">
     
     <!-- Leaflet -->
-    <link rel="stylesheet" href="css/normalize.min.css" />
+    <link rel="stylesheet" href="css/normalize.min.css">
+    <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
-    <link rel="stylesheet" href="css/L.Control.Locate.min.css" />
+    <link rel="stylesheet" href="css/L.Control.Locate.min.css">
     <style>
         #map {
             height: 100vh;
@@ -206,47 +207,62 @@
 
         // Fetch baanat lines
         
-        fetch('/baanat.geojson')
-            .then(response => response.json())
-            .then(data => {
-                // Function to determine line width based on zoom level
-                function getLineWidth(zoom) {
-                    if (zoom >= 15) return 6;  // Wider at high zoom levels
-                    if (zoom >= 12) return 4;
-                    if (zoom >= 10) return 2;
-                    return 2;  // Thin at low zoom levels
-                }
+            fetch('/baanat.geojson')
+    .then(response => response.json())
+    .then(data => {
+        function getLineWidth(zoom) {
+            if (zoom >= 15) return 6;
+            if (zoom >= 12) return 4;
+            if (zoom >= 10) return 2;
+            return 2;
+        }
 
-                // Create the GeoJSON layer
-                const geojsonLayer = L.geoJSON(data, {
-                    filter: function(feature) {
-                        return feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString';
-                    },
-                    style: function(feature) {
-                        return {
-                            color: "#a952ce",
-                            weight: getLineWidth(map.getZoom()),  // Set initial width
-                            opacity: 1 
-                        };
-                    },
-                    onEachFeature: function(feature, layer) {
-                        if (feature.properties && feature.properties.name) {
-                            layer.bindPopup(feature.properties.name);
-                        }
+        const geojsonLayer = L.geoJSON(data, {
+            filter: function(feature) {
+                return feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString';
+            },
+            style: function(feature) {
+                return {
+                    color: "#a952ce",
+                    weight: getLineWidth(map.getZoom()),
+                    opacity: 1 
+                };
+            },
+            onEachFeature: function(feature, layer) {
+                if (feature.properties && feature.properties.ref) {
+                    const midpoint = getLineMidpoint(feature.geometry.coordinates);
+                    
+                    if (midpoint) {
+                        const icon = L.divIcon({
+                            className: 'road-icon',
+                            html: `<div class="road-shield">${feature.properties.ref}</div>`,
+                            iconSize: [24, 24],  // Size of the circle
+                            iconAnchor: [12, 12] // Center the icon
+                        });
+
+                        L.marker([midpoint[1], midpoint[0]], { icon }).addTo(map);
                     }
-                }).addTo(map);
+                }
+            }
+        }).addTo(map);
 
-                // Update line width when zoom level changes
-                map.on('zoomend', function() {
-                    const zoom = map.getZoom();
-                    geojsonLayer.setStyle({
-                        weight: getLineWidth(zoom)
-                     });
-                });
-            })
-            .catch(error => {
-                console.error('Error loading the GeoJSON data:', error);
+        map.on('zoomend', function() {
+            const zoom = map.getZoom();
+            geojsonLayer.setStyle({
+                weight: getLineWidth(zoom)
             });
+        });
+
+        function getLineMidpoint(coords) {
+            if (!coords.length) return null;
+            
+            const midIndex = Math.floor(coords.length / 2);
+            return coords[midIndex];  // Return the middle coordinate
+        }
+    })
+    .catch(error => {
+        console.error('Error loading the GeoJSON data:', error);
+    });
 
         // fetch parking information from the json
         fetch('/parking.json').then((response) => response.json()).then((json) => {
