@@ -14,46 +14,42 @@
     <meta name="theme-color" content="#0050aa">
     <link rel="manifest" href="manifest.json">
     
-    <!--Android-->
+    <!-- Android, iOS, MS, and Favicon links for app/web capabilities -->
     <meta name="mobile-web-app-capable" content="yes">
     <link rel="icon" sizes="192x192" href="images/icons/icon-192x192.png">
     <link rel="icon" sizes="512x512" href="images/icons/icon-512x512.png">
-    
-    <!--iOS-->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Tellinki.com">
     <link rel="apple-touch-icon-precomposed" href="images/icons/icon-512x512.png">
     <link rel="mask-icon" href="images/icons/desktop/safari-pinned-tab.svg" color="#5bbad5">
-    
-    <!--MS-->
     <meta name="msapplication-tap-highlight" content="no">
     <meta name="msapplication-TileImage" content="images/icons/icon-150x150.png">
     <meta name="msapplication-TileColor" content="#0050aa">
-    
-    <!--Favicon-->
     <link rel="icon" type="image/png" sizes="32x32" href="images/icons/icon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="images/icons/icon-16x16.png">
     
-    <!-- Leaflet -->
+    <!-- Leaflet styles -->
     <link rel="stylesheet" href="css/normalize.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
     <link rel="stylesheet" href="css/L.Control.Locate.min.css">
+    
     <style>
+        /* Map container styling */
         #map {
             height: 100vh;
             width: 100vw;
         }
 
+        /* Custom marker cluster styles */
         .marker-cluster-small,
         .marker-cluster-medium,
         .marker-cluster-large {
             background-color: rgba(0, 80, 170, 0.2);
         }
-
         .marker-cluster-small div,
         .marker-cluster-medium div,
         .marker-cluster-large div {
@@ -61,10 +57,7 @@
             background-color: #0050aa;
         }
 
-        .leaflet-tooltip-right:before {
-            border: 0px;
-        }
-
+        /* Tooltip and marker label styles */
         .leaflet-tooltip.marker-label {
             top: -16px;
             font-size: 10px;
@@ -80,6 +73,7 @@
             background-color: #FFF;
         }
 
+        /* Road shield style for reference number */
         .road-shield {
             background: #fcb919;
             border: 2px solid black;
@@ -95,8 +89,9 @@
             justify-content: center;
             align-items: center;
         }
-        
     </style>
+    
+    <!-- Leaflet scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
@@ -109,70 +104,46 @@
         <div id="map"></div>
     </main>
     <noscript>Turn on JavaScript to access this site content.</noscript>
+
     <script>
-        
-        // initialize the map with leaflet.js
-        var map = L.map('map', { minZoom: 12, maxZoom: 18 })
-
-        // add marker clustering for performance
-        var markers = L.markerClusterGroup({ maxClusterRadius: 200, disableClusteringAtZoom: 17, spiderfy_on_max_zoom: false });
-
-        // center the map to show Helsinki well
-        map.setView([60.2097412, 24.98643], 10);
-
-        // set the map view bounds (Desktop size)
+        // Initialize the map
+        const map = L.map('map', { minZoom: 12, maxZoom: 18 });
+        map.setView([60.2097412, 24.98643], 10); // Center map over Helsinki
         map.setMaxBounds(L.latLngBounds(L.latLng(60.3300069, 25.5136872), L.latLng(60.0888172, 24.4589996)));
 
-        // set the desired tiles with attribution
+        // Add OpenStreetMap tile layer
         L.tileLayer.provider('OpenStreetMap.DE').addTo(map);
 
-        // allow asking for the user's current location
+        // Add location control (shows user's location)
         L.control.locate().addTo(map);
 
-        // add info text
+        // Add info text at the bottom left
         L.Control.Textbox = L.Control.extend({
             onAdd: function(map) {
-                var text = L.DomUtil.create('div', 'info-text'); // Added a class for styling
+                const text = L.DomUtil.create('div', 'info-text');
                 text.id = "info_text";
-                text.innerHTML = "<strong>Aineisto päivitetty 15.02.2025. Vaihdettu taustakarttaa. Ylläpitäjä Tommi Hautala (hello@tellinki.com), aineistoa voi muokata OpenStreetMapin kautta.</strong>";
+                text.innerHTML = "<strong>Aineisto päivitetty 15.02.2025...</strong>";
                 return text;
             },
-            onRemove: function(map) {
-            }
+            onRemove: function(map) {}
         });
-        L.control.textbox = function(opts) {
-            return new L.Control.Textbox(opts);
-        };
         L.control.textbox({ position: 'bottomleft' }).addTo(map);
 
-        // add custom icons for rack and stand markers
-        var rackIcon = L.icon({ iconUrl: 'images/icons/icon-rack.png', iconSize: [32, 32] });
-        var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
-        var twotierIcon = L.icon({ iconUrl: 'images/icons/icon-twotier.png', iconSize: [32, 32] });
-        var safeloopIcon = L.icon({ iconUrl: 'images/icons/icon-safeloop.png', iconSize: [32, 32] });
-        var mechIcon = L.icon({ iconUrl: 'images/icons/icon-mech.png', iconSize: [16, 16] });
-        var waterIcon = L.icon({ iconUrl: 'images/icons/icon-water.png', iconSize: [16, 16] });
+        // Define custom marker icons for different types of parking
+        const rackIcon = L.icon({ iconUrl: 'images/icons/icon-rack.png', iconSize: [32, 32] });
+        const standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
+        const twotierIcon = L.icon({ iconUrl: 'images/icons/icon-twotier.png', iconSize: [32, 32] });
+        const safeloopIcon = L.icon({ iconUrl: 'images/icons/icon-safeloop.png', iconSize: [32, 32] });
 
-        // Fetch mechanical repair points
+        // Fetch and display mechanical repair points
         fetch('/mech.geojson')
             .then(response => response.json())
             .then(data => {
                 L.geoJSON(data, {
                     pointToLayer: function (feature, latlng) {
-                        var lat = feature.properties.lat;
-                        var lon = feature.properties.lon;
-
-                        // Create a latLng object
-                        var latLng = L.latLng(lat, lon);
-
-                        // Create the marker with the custom icon
-                        var marker = L.marker(latLng, { icon: mechIcon });
-
-                        // Create the popup content based on properties
-                        var popupContent = `<b>Palvelut:</b> <br>`;
-
-                        // Manually map each service key to Finnish name
-                        var services = {
+                        const marker = L.marker(latlng, { icon: mechIcon });
+                        let popupContent = `<b>Palvelut:</b><br>`;
+                        const services = {
                             "service:bicycle:chain_tool": "Ketjutyökalu",
                             "service:bicycle:cleaning": "Pesupaikka",
                             "service:bicycle:diy": "Työkalut",
@@ -181,51 +152,88 @@
                             "service:bicycle:stand": "Teline",
                             "service:bicycle:tools": "Työkalut"
                         };
-
-                        // Loop through the services and add to popup content if available
-                        for (var service in services) {
+                        // Loop through and add available services to popup
+                        for (const service in services) {
                             if (feature.properties[service] === "yes") {
                                 popupContent += `✔ ${services[service]} saatavilla<br>`;
                             }
                         }
-
-                        // Bind the popup to the marker
                         marker.bindPopup(popupContent);
-
-                        // Return the marker with the popup bound
                         return marker;
                     }
                 }).addTo(map);
             })
             .catch(error => console.error('Error loading the GeoJSON file:', error));
 
-        // Fetch water points
+        // Fetch and display water points
         fetch('/water.geojson')
             .then(response => response.json())
             .then(data => {
                 L.geoJSON(data, {
                     pointToLayer: function (feature, latlng) {
-                        var lat = feature.properties.lat;
-                        var lon = feature.properties.lon;
-
-                        // Create a latLng object
-                        var latLng = L.latLng(lat, lon);
-
-                        // Create the marker with the custom icon
-                        var marker = L.marker(latLng, { icon: waterIcon });
-
-                        // Return the marker with the popup bound
+                        const marker = L.marker(latlng, { icon: waterIcon });
                         return marker;
                     }
                 }).addTo(map);
             })
             .catch(error => console.error('Error loading the GeoJSON file:', error));
 
-        // Fetch baanat lines
-        
-            fetch('/baanat.geojson')
-    .then(response => response.json())
-    .then(data => {
+        // Fetch and display baana-lines
+        fetch('/baanat.geojson')
+            .then(response => response.json())
+            .then(data => {
+                const geojsonLayer = L.geoJSON(data, {
+                    filter: function(feature) {
+                        return feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString';
+                    },
+                    style: function(feature) {
+                        return {
+                            color: "#a952ce",
+                            weight: getLineWidth(map.getZoom()),
+                            opacity: 1
+                        };
+                    },
+                    onEachFeature: function(feature, layer) {
+                        if (feature.properties.name) {
+                            layer.bindTooltip(feature.properties.name, {
+                                permanent: false,
+                                direction: "center",
+                                className: "line-tooltip"
+                            });
+                        }
+                        if (feature.properties.ref) {
+                            const midpoint = getLineMidpoint(feature.geometry.coordinates);
+                            if (midpoint) {
+                                const icon = L.divIcon({
+                                    className: 'road-icon',
+                                    html: `<div class="road-shield">${feature.properties.ref}</div>`,
+                                    iconSize: [24, 24],
+                                    iconAnchor: [12, 12]
+                                });
+                                L.marker([midpoint[1], midpoint[0]], { icon }).addTo(map);
+                            }
+                        }
+                    }
+                }).addTo(map);
+
+                // Adjust line weight based on zoom level
+                map.on('zoomend', function() {
+                    const zoom = map.getZoom();
+                    geojsonLayer.setStyle({ weight: getLineWidth(zoom) });
+                });
+            })
+            .catch(error => {
+                console.error('Error loading the GeoJSON data:', error);
+            });
+
+        // Utility function to get midpoint of coordinates
+        function getLineMidpoint(coords) {
+            if (!coords.length) return null;
+            const midIndex = Math.floor(coords.length / 2);
+            return coords[midIndex];
+        }
+
+        // Adjust line width based on zoom level
         function getLineWidth(zoom) {
             if (zoom >= 15) return 6;
             if (zoom >= 12) return 4;
@@ -233,104 +241,7 @@
             return 2;
         }
 
-        const geojsonLayer = L.geoJSON(data, {
-            filter: function(feature) {
-                return feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString';
-            },
-            style: function(feature) {
-                return {
-                    color: "#a952ce",
-                    weight: getLineWidth(map.getZoom()),
-                    opacity: 1 
-                };
-            },
-            
-        onEachFeature: function(feature, layer) {
-        if (feature.properties) {
-        // Show name when hovering (tooltip)
-        if (feature.properties.name) {
-            layer.bindTooltip(feature.properties.name, {
-                permanent: false, // Only show when hovering
-                direction: "center",
-                className: "line-tooltip"
-            });
-        }
-
-        // Add ref number at midpoint
-            if (feature.properties.ref) {
-                    const midpoint = getLineMidpoint(feature.geometry.coordinates);
-
-                    if (midpoint) {
-                        const icon = L.divIcon({
-                            className: 'road-icon',
-                            html: `<div class="road-shield">${feature.properties.ref}</div>`,
-                            iconSize: [24, 24],
-                            iconAnchor: [12, 12]
-                        });
-
-                        L.marker([midpoint[1], midpoint[0]], { icon }).addTo(map);
-                    }
-                }
-            }
-        }
-
-        }).addTo(map);
-
-        map.on('zoomend', function() {
-            const zoom = map.getZoom();
-            geojsonLayer.setStyle({
-                weight: getLineWidth(zoom)
-            });
-        });
-
-        function getLineMidpoint(coords) {
-            if (!coords.length) return null;
-            
-            const midIndex = Math.floor(coords.length / 2);
-            return coords[midIndex];  // Return the middle coordinate
-        }
-    })
-    .catch(error => {
-        console.error('Error loading the GeoJSON data:', error);
-    });
-
-        // fetch parking information from the json
-        fetch('/parking.json').then((response) => response.json()).then((json) => {
-            for (var i = 0; i < json['features'].length; i++) {
-                var item = json['features'][i];
-
-                // skip other than stands or racks or two-tiers or safe_loops
-                var amenity = item['properties']['bicycle_parking'];
-                if (amenity == null || !['stands', 'safe_loops', 'two-tier', 'rack'].includes(amenity)) continue;
-
-                // add custom marker item to indicate parking
-                var icon;
-                    if (amenity === 'stands') {
-                        icon = standIcon;
-                } else if (amenity === 'rack') {
-                        icon = rackIcon;
-                } else if (amenity === 'safe_loops') {
-                        icon = safeloopIcon;
-                } else if (amenity === 'two-tier') {
-                        icon = twotierIcon;
-                }
-
-                // get the coordinates and create marker
-                var mark = L.marker([item['properties']['lat'], item['properties']['lon']], { icon: icon });
-
-                // add capacity indicator to icon (if available)
-                var capacity = item['properties']['capacity']
-                if (capacity) mark.bindTooltip(capacity, { permanent: true, direction: 'right', className: 'marker-label' });
-
-                // finally, add the marker to the map layer
-                markers.addLayer(mark);
-            }
-            // add cluster to map
-            map.addLayer(markers);
-        })
-            .catch(error => console.error('Error fetching the GeoJSON:', error));  // Handle errors
-
-        // register serviceWorker to allow installing as app
+        // Register service worker for app installation
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js');
     </script>
 </body>
