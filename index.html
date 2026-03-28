@@ -245,7 +245,7 @@
   <div class="info-bar" role="contentinfo">
     <strong>Aineisto päivitetty 28.03.2026.</strong>
     Ylläpitäjä Tommi Siimeslehto
-    (<a href="/cdn-cgi/l/email-protection#3f575a5353507f4b5a535356515456115c5052"><span class="__cf_email__" data-cfemail="157d7079797a55617079797c7b7e7c3b767a78">[email&#160;protected]</span></a>).
+    (<a href="mailto:hello@tellinki.com">hello@tellinki.com</a>).
     Aineistoa voi muokata
     <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMapin</a> kautta.
   </div>
@@ -343,7 +343,7 @@
   </noscript>
 
   <!-- Leaflet — synchronous, end of body -->
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
   <script src="js/leaflet-providers.min.js"></script>
@@ -428,28 +428,14 @@
       }
 
       // ── Load all layers in parallel ───────────────────────────────────────────
-      // Dismiss loading overlay (safe to call multiple times)
-      function dismissLoading() {
+      Promise.allSettled([
+        loadParking(), loadMech(), loadWater(), loadBaana()
+      ]).then(() => {
         const ov = document.getElementById('loading');
-        if (!ov) return;
         ov.classList.add('hidden');
         setTimeout(() => ov.remove(), 500);
-      }
-
-      // Wrap each loader in Promise.resolve().then() so any synchronous throw
-      // inside a loader is always caught — guaranteeing allSettled() resolves.
-      Promise.allSettled([
-        Promise.resolve().then(loadParking),
-        Promise.resolve().then(loadMech),
-        Promise.resolve().then(loadWater),
-        Promise.resolve().then(loadBaana)
-      ]).then(() => {
-        dismissLoading();
         wireToggles();
       });
-
-      // Hard fallback: hide overlay after 10 s regardless
-      setTimeout(dismissLoading, 10000);
 
       // ── Parking ───────────────────────────────────────────────────────────────
       function loadParking() {
@@ -514,14 +500,12 @@
             pointToLayer(feature, _ll) {
               const { lat, lon } = feature.properties;
               const marker = L.marker(L.latLng(lat, lon), { icon: ICONS.water });
-              const name = feature.properties.name;
               marker.bindPopup(
                 `<div class="popup-title">
                    ${svgTag(SVG.water, 18)}
-                   ${name ? name : 'Vesipiste'}
-                 </div>
-                 ${name ? '<div style="font-size:11px;color:#777;margin-top:2px">Vesipiste</div>' : ''}`,
-                { maxWidth: 200 }
+                   Vesipiste
+                 </div>`,
+                { maxWidth: 160 }
               );
               return marker;
             }
@@ -536,7 +520,7 @@
             filter: f =>
               f.geometry.type === 'LineString' ||
               f.geometry.type === 'MultiLineString',
-            style: () => ({ color: '#a952ce', weight: lineWeight(map.getZoom()), opacity: 1 }),
+            style: () => ({ color: '#EF9F27', weight: lineWeight(map.getZoom()), opacity: 1 }),
             onEachFeature(feature, layer) {
               const props = feature.properties;
               if (!props) return;
@@ -604,4 +588,13 @@
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleLegend(); }
       });
 
-      // ── Service Worker ────────────────────────────────────�
+      // ── Service Worker ─────────────────────────────────────────────────────────
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js').catch(() => {});
+      }
+    }
+
+    initMap();
+  </script>
+</body>
+</html>
