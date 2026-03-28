@@ -505,7 +505,8 @@
                    ${svgTag(SVG.water, 18)}
                    Vesipiste
                  </div>`,
-                { maxWidth: 160 }
+                ${name ? '<div style="font-size:11px;color:#777;margin-top:2px">Vesipiste</div>' : ''}`,
+                { maxWidth: 200 }
               );
               return marker;
             }
