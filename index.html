@@ -32,7 +32,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="images/icons/icon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="images/icons/icon-16x16.png">
 
-  <!-- Leaflet CSS — loaded before JS to avoid FOUC -->
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="css/normalize.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
@@ -41,46 +41,40 @@
   <link rel="stylesheet" href="css/L.Control.Locate.min.css">
 
   <style>
-    /* ─── Reset & base ─────────────────────────────────── */
+    /* ─── Reset & tokens ───────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --blue:      #0050aa;
+      --blue:       #0050aa;
       --blue-light: rgba(0, 80, 170, 0.15);
-      --blue-mid:  rgba(0, 80, 170, 0.6);
-      --purple:    #a952ce;
-      --white:     #ffffff;
-      --text:      #1a1a2e;
-      --shadow:    0 2px 12px rgba(0,0,0,.18);
-      --radius:    10px;
-      --font:      system-ui, 'Segoe UI', sans-serif;
+      --purple:     #a952ce;
+      --white:      #ffffff;
+      --text:       #1a1a2e;
+      --muted:      #777;
+      --border:     rgba(0, 80, 170, 0.12);
+      --shadow:     0 2px 14px rgba(0,0,0,.16);
+      --radius:     10px;
+      --font:       system-ui, 'Segoe UI', sans-serif;
+      --toggle-w:   36px;
+      --toggle-h:   20px;
     }
 
     html, body { height: 100%; overflow: hidden; font-family: var(--font); }
 
-    /* ─── Map ───────────────────────────────────────────── */
+    /* ─── Map ──────────────────────────────────────────────── */
     #map {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
+      position: fixed; inset: 0;
+      width: 100%; height: 100%; z-index: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    /* ─── Loading overlay ──────────────────────────────── */
+    /* ─── Loading overlay ──────────────────────────────────── */
     #loading {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      background: var(--blue);
-      color: var(--white);
-      font-size: 1rem;
-      letter-spacing: .04em;
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px;
+      background: var(--blue); color: var(--white);
+      font-size: 1rem; letter-spacing: .04em;
       transition: opacity .4s ease;
     }
     #loading.hidden { opacity: 0; pointer-events: none; }
@@ -93,379 +87,448 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ─── Cluster styles ───────────────────────────────── */
+    /* ─── Clusters ─────────────────────────────────────────── */
     .marker-cluster-small,
     .marker-cluster-medium,
     .marker-cluster-large { background-color: var(--blue-light); }
-
     .marker-cluster-small div,
     .marker-cluster-medium div,
     .marker-cluster-large div {
-      color: var(--white);
-      background-color: var(--blue);
-      font-weight: 700;
+      color: var(--white); background-color: var(--blue); font-weight: 700;
     }
 
-    /* ─── Tooltip / capacity badge ─────────────────────── */
+    /* ─── Capacity badge ───────────────────────────────────── */
     .leaflet-tooltip-right::before { border: 0; }
-
     .leaflet-tooltip.marker-label {
-      top: -16px;
-      font-size: 10px;
-      font-weight: 700;
-      text-align: center;
-      width: 18px; height: 18px;
-      border-radius: 50%;
-      padding: 0;
-      line-height: 18px;
-      color: var(--blue);
-      background: var(--white);
+      top: -16px; font-size: 10px; font-weight: 700;
+      text-align: center; width: 18px; height: 18px;
+      border-radius: 50%; padding: 0; line-height: 18px;
+      color: var(--blue); background: var(--white);
       border: 1.5px solid var(--blue);
       box-shadow: 0 1px 4px rgba(0,0,0,.2);
     }
 
-    /* ─── Road shield (pyöräbaana ref) ─────────────────── */
+    /* ─── Road shield ──────────────────────────────────────── */
     .road-shield {
-      background: #fcb919;
-      border: 2px solid #111;
-      color: #111;
-      font-weight: 700;
-      font-size: 10px;
-      width: 22px; height: 22px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: #fcb919; border: 2px solid #111; color: #111;
+      font-weight: 700; font-size: 10px;
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
     }
 
-    /* ─── Info bar ─────────────────────────────────────── */
+    /* ─── Info bar ─────────────────────────────────────────── */
     .info-bar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 800;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 800;
       background: rgba(255,255,255,.92);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      border-top: 1px solid rgba(0,80,170,.15);
-      padding: 6px 12px;
-      font-size: 11px;
-      color: #444;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      line-height: 1.4;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      border-top: 1px solid var(--border);
+      padding: 6px 12px; font-size: 11px; color: #444; line-height: 1.4;
     }
     .info-bar strong { color: var(--blue); }
     .info-bar a { color: var(--blue); }
 
-    /* ─── Legend panel ─────────────────────────────────── */
+    /* ─── Legend panel ─────────────────────────────────────── */
     #legend {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      z-index: 800;
-      background: rgba(255,255,255,.95);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 10px 14px;
-      font-size: 12px;
-      color: var(--text);
-      min-width: 155px;
+      position: fixed; top: 10px; right: 10px; z-index: 800;
+      background: rgba(255,255,255,.97);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 10px 14px; font-size: 12px; color: var(--text);
+      min-width: 210px;
       transition: transform .25s ease, opacity .25s ease;
     }
-    #legend.collapsed { transform: translateY(-6px); opacity: .85; }
+    #legend.collapsed { transform: translateY(-4px); opacity: .9; }
 
     #legend-toggle {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-weight: 700;
-      font-size: 13px;
-      color: var(--blue);
-      cursor: pointer;
-      user-select: none;
-      gap: 8px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-weight: 700; font-size: 13px; color: var(--blue);
+      cursor: pointer; user-select: none; gap: 8px;
     }
     #legend-toggle svg { transition: transform .2s; flex-shrink: 0; }
     #legend.collapsed #legend-toggle svg { transform: rotate(-90deg); }
 
-    #legend-body { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
+    #legend-body { margin-top: 10px; display: flex; flex-direction: column; gap: 0; }
     #legend.collapsed #legend-body { display: none; }
 
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      white-space: nowrap;
+    /* ─── Layer rows ───────────────────────────────────────── */
+    .layer-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; padding: 5px 0;
     }
-    .legend-item img { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
-    .legend-dot {
-      width: 12px; height: 12px;
-      border-radius: 50%;
-      flex-shrink: 0;
+    .layer-row-left {
+      display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
     }
-    .legend-line {
-      width: 18px; height: 4px;
-      border-radius: 2px;
-      flex-shrink: 0;
+    .layer-label { font-weight: 600; font-size: 12px; }
+
+    /* Sub-items (parking types) */
+    .layer-sub {
+      display: flex; flex-direction: column; gap: 3px;
+      padding: 2px 0 6px 28px;
     }
-    .legend-sep {
-      border: none;
-      border-top: 1px solid #e0e0e0;
-      margin: 3px 0;
+    .sub-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--muted);
+    }
+    .sub-item img { width: 15px; height: 15px; object-fit: contain; flex-shrink: 0; }
+
+    /* Dim when off */
+    .layer-row.layer-off .layer-row-left { opacity: .38; }
+    .layer-row.layer-off + .layer-sub    { opacity: .38; }
+
+    /* ─── Toggle switch ────────────────────────────────────── */
+    .toggle {
+      position: relative;
+      width: var(--toggle-w); height: var(--toggle-h); flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: #cdd3db; border-radius: 999px;
+      cursor: pointer; transition: background .2s;
+    }
+    .toggle-track::after {
+      content: '';
+      position: absolute; top: 3px; left: 3px;
+      width: calc(var(--toggle-h) - 6px);
+      height: calc(var(--toggle-h) - 6px);
+      background: #fff; border-radius: 50%;
+      transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.25);
+    }
+    .toggle input:checked + .toggle-track { background: var(--blue); }
+    .toggle input:checked + .toggle-track::after {
+      transform: translateX(calc(var(--toggle-w) - var(--toggle-h)));
+    }
+    .toggle input:focus-visible + .toggle-track {
+      outline: 2px solid var(--blue); outline-offset: 2px;
     }
 
-    /* ─── Mobile tweaks ────────────────────────────────── */
+    /* ─── Legend icon helpers ──────────────────────────────── */
+    .legend-icon-img { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
+    .legend-icon-svg { width: 20px; height: 20px; flex-shrink: 0; }
+    .legend-line-swatch { width: 20px; height: 4px; border-radius: 2px; flex-shrink: 0; }
+    .legend-sep { border: none; border-top: 1px solid #ebebeb; margin: 4px 0; }
+
+    /* ─── Popup ────────────────────────────────────────────── */
+    .leaflet-popup-content-wrapper {
+      border-radius: 8px; box-shadow: 0 3px 14px rgba(0,0,0,.18);
+    }
+    .popup-title {
+      font-weight: 700; font-size: 13px; color: var(--blue);
+      margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+    }
+    .popup-service {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--text); padding: 2px 0;
+    }
+
+    /* ─── Mobile ───────────────────────────────────────────── */
     @media (max-width: 480px) {
       #legend { top: auto; bottom: 38px; right: 8px; left: 8px; min-width: 0; }
       .info-bar { font-size: 10px; padding: 5px 10px; }
-      /* Push Leaflet controls so they don't overlap legend */
       .leaflet-top.leaflet-left { top: 4px; left: 4px; }
     }
-
-    /* Prevent default tap highlight on map */
-    #map { -webkit-tap-highlight-color: transparent; }
   </style>
 </head>
 
 <body>
 
-  <!-- Loading overlay -->
   <div id="loading" role="status" aria-live="polite">
     <div class="spinner" aria-hidden="true"></div>
     <span>Ladataan karttaa…</span>
   </div>
 
-  <!-- Map -->
   <main>
     <div id="map" role="application" aria-label="Pyöräpysäköintikartta Helsingissä"></div>
   </main>
 
-  <!-- Info bar (replaces L.Control.Textbox) -->
   <div class="info-bar" role="contentinfo">
-    <span>
-      <strong>Aineisto päivitetty 18.05.2025.</strong>
-      Ylläpitäjä Tommi Siimeslehto
-      (<a href="mailto:hello@tellinki.com">hello@tellinki.com</a>).
-      Aineistoa voi muokata
-      <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMapin</a> kautta.
-    </span>
+    <strong>Aineisto päivitetty 28.03.2026.</strong>
+    Ylläpitäjä Tommi Siimeslehto
+    (<a href="mailto:hello@tellinki.com">hello@tellinki.com</a>).
+    Aineistoa voi muokata
+    <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMapin</a> kautta.
   </div>
 
-  <!-- Legend -->
-  <div id="legend" role="complementary" aria-label="Karttaselite">
-    <div id="legend-toggle" role="button" tabindex="0" aria-expanded="true" aria-controls="legend-body">
-      Selite
+  <!-- ── Legend ────────────────────────────────────────────────────────────── -->
+  <div id="legend" role="complementary" aria-label="Tasot ja selite">
+
+    <div id="legend-toggle" role="button" tabindex="0"
+         aria-expanded="true" aria-controls="legend-body">
+      Tasot &amp; selite
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-        <path d="M2 4l4 4 4-4" stroke="#0050aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M2 4l4 4 4-4" stroke="#0050aa" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
+
     <div id="legend-body">
-      <div class="legend-item"><img src="images/icons/icon-stand.png" alt=""> Runkolukitusteline</div>
-      <div class="legend-item"><img src="images/icons/icon-rack.png" alt=""> Pyöräteline</div>
-      <div class="legend-item"><img src="images/icons/icon-safeloop.png" alt=""> Safe Loop</div>
-      <div class="legend-item"><img src="images/icons/icon-twotier.png" alt=""> Kaksitasoinen</div>
-      <hr class="legend-sep">
-      <div class="legend-item"><img src="images/icons/icon-mech.png" alt=""> Huoltopiste</div>
-      <div class="legend-item"><img src="images/icons/icon-water.png" alt=""> Vesipiste</div>
-      <hr class="legend-sep">
-      <div class="legend-item">
-        <div class="legend-line" style="background:#a952ce;"></div>
-        Pyöräbaana
+
+      <!-- Parking -->
+      <div class="layer-row" id="row-parking">
+        <div class="layer-row-left">
+          <img class="legend-icon-img" src="images/icons/icon-stand.png" alt="">
+          <span class="layer-label">Pyöräpysäköinti</span>
+        </div>
+        <label class="toggle" aria-label="Näytä pyöräpysäköinti">
+          <input type="checkbox" id="toggle-parking" checked>
+          <span class="toggle-track"></span>
+        </label>
       </div>
-    </div>
-  </div>
+      <div class="layer-sub" id="sub-parking">
+        <div class="sub-item"><img src="images/icons/icon-stand.png" alt=""> Runkolukitusteline</div>
+        <div class="sub-item"><img src="images/icons/icon-rack.png" alt=""> Pyöräteline</div>
+        <div class="sub-item"><img src="images/icons/icon-safeloop.png" alt=""> Safe Loop</div>
+        <div class="sub-item"><img src="images/icons/icon-twotier.png" alt=""> Kaksitasoinen</div>
+      </div>
+
+      <hr class="legend-sep">
+
+      <!-- Baana -->
+      <div class="layer-row" id="row-baana">
+        <div class="layer-row-left">
+          <div class="legend-line-swatch" style="background:var(--purple)"></div>
+          <span class="layer-label">Pyöräbaana</span>
+        </div>
+        <label class="toggle" aria-label="Näytä pyöräbaanat">
+          <input type="checkbox" id="toggle-baana" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <hr class="legend-sep">
+
+      <!-- Water -->
+      <div class="layer-row" id="row-water">
+        <div class="layer-row-left">
+          <svg class="legend-icon-svg" viewBox="0 0 20 20" fill="none"
+               xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="10" cy="10" r="9" fill="#0050aa"/>
+            <path d="M10 4.5c0 0-4.5 4.5-4.5 7a4.5 4.5 0 0 0 9 0c0-2.5-4.5-7-4.5-7z"
+                  fill="white"/>
+          </svg>
+          <span class="layer-label">Vesipisteet</span>
+        </div>
+        <label class="toggle" aria-label="Näytä vesipisteet">
+          <input type="checkbox" id="toggle-water" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <hr class="legend-sep">
+
+      <!-- Repair -->
+      <div class="layer-row" id="row-mech">
+        <div class="layer-row-left">
+          <svg class="legend-icon-svg" viewBox="0 0 20 20" fill="none"
+               xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="10" cy="10" r="9" fill="#0050aa"/>
+            <path d="M13.2 6.8a2.8 2.8 0 0 0-3.6 3.6L5.5 14.5l.8.8 4.1-4.1a2.8 2.8 0 0 0 3.6-3.6l-1.6 1.6-1.2-1.2 1.6-1.6z"
+                  fill="white" fill-rule="evenodd"/>
+          </svg>
+          <span class="layer-label">Huoltopisteet</span>
+        </div>
+        <label class="toggle" aria-label="Näytä huoltopisteet">
+          <input type="checkbox" id="toggle-mech" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+    </div><!-- /legend-body -->
+  </div><!-- /legend -->
 
   <noscript>
     <style>#loading{display:none}</style>
-    <p style="padding:2rem;font-family:sans-serif">
-      Ota JavaScript käyttöön käyttääksesi tätä sivustoa.
-    </p>
+    <p style="padding:2rem;font-family:sans-serif">Ota JavaScript käyttöön käyttääksesi tätä sivustoa.</p>
   </noscript>
 
-  <!-- Leaflet libraries: NOT deferred — must be synchronously available before initMap runs -->
+  <!-- Leaflet — synchronous, end of body -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
   <script src="js/leaflet-providers.min.js"></script>
   <script src="js/L.Control.Locate.min.js"></script>
 
-  <!-- Init script runs after the libraries above are parsed -->
   <script>
+    // ── SVG icon factory — generates branded map markers as data URIs ─────────
+    function svgIcon(innerSVG, size) {
+      const markup = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 20 20">${innerSVG}</svg>`;
+      const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(markup);
+      return L.icon({ iconUrl: url, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+    }
+
+    // Shared SVG bodies (reused in map markers AND popups)
+    const SVG = {
+      water: `<circle cx="10" cy="10" r="9" fill="#0050aa"/>
+              <path d="M10 4.5c0 0-4.5 4.5-4.5 7a4.5 4.5 0 0 0 9 0c0-2.5-4.5-7-4.5-7z" fill="white"/>`,
+
+      mech:  `<circle cx="10" cy="10" r="9" fill="#0050aa"/>
+              <path d="M13.2 6.8a2.8 2.8 0 0 0-3.6 3.6L5.5 14.5l.8.8 4.1-4.1a2.8 2.8 0 0 0 3.6-3.6l-1.6 1.6-1.2-1.2 1.6-1.6z"
+                    fill="white" fill-rule="evenodd"/>`,
+
+      check: `<circle cx="6" cy="6" r="6" fill="#0050aa"/>
+              <path d="M3.5 6l2 2 3-3" stroke="white" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round"/>`
+    };
+
+    const SERVICES_FI = {
+      'service:bicycle:chain_tool':  'Ketjutyökalu',
+      'service:bicycle:cleaning':    'Pesupaikka',
+      'service:bicycle:diy':         'Tee-se-itse',
+      'service:bicycle:pump':        'Pumppu',
+      'service:bicycle:screwdriver': 'Ruuvimeisseli',
+      'service:bicycle:stand':       'Teline',
+      'service:bicycle:tools':       'Työkalut'
+    };
+
     function initMap() {
       // ── Map setup ────────────────────────────────────────────────────────────
-      const map = L.map('map', {
-        minZoom: 12,
-        maxZoom: 18,
-        zoomControl: true,
-        attributionControl: true
-      });
-
+      const map = L.map('map', { minZoom: 12, maxZoom: 18 });
       map.setView([60.2097412, 24.98643], 12);
       map.setMaxBounds(L.latLngBounds(
         L.latLng(60.330, 25.514),
         L.latLng(60.089, 24.459)
       ));
-
       L.tileLayer.provider('OpenStreetMap.DE').addTo(map);
       L.control.locate({ position: 'topleft' }).addTo(map);
 
-      // ── Clustering ───────────────────────────────────────────────────────────
-      const markers = L.markerClusterGroup({
-        maxClusterRadius: 200,
-        disableClusteringAtZoom: 17,
-        spiderfyOnMaxZoom: false,
-        chunkedLoading: true          // don't block the UI thread
-      });
-
-      // ── Icons (defined once, reused) ─────────────────────────────────────────
+      // ── Icons ────────────────────────────────────────────────────────────────
       const ICONS = {
-        rack:      L.icon({ iconUrl: 'images/icons/icon-rack.png',      iconSize: [32, 32], iconAnchor: [16, 16] }),
-        stand:     L.icon({ iconUrl: 'images/icons/icon-stand.png',     iconSize: [32, 32], iconAnchor: [16, 16] }),
-        twotier:   L.icon({ iconUrl: 'images/icons/icon-twotier.png',   iconSize: [32, 32], iconAnchor: [16, 16] }),
-        safeloop:  L.icon({ iconUrl: 'images/icons/icon-safeloop.png',  iconSize: [32, 32], iconAnchor: [16, 16] }),
-        mech:      L.icon({ iconUrl: 'images/icons/icon-mech.png',      iconSize: [16, 16], iconAnchor: [8, 8] }),
-        water:     L.icon({ iconUrl: 'images/icons/icon-water.png',     iconSize: [16, 16], iconAnchor: [8, 8] })
+        rack:     L.icon({ iconUrl: 'images/icons/icon-rack.png',     iconSize: [32,32], iconAnchor: [16,16] }),
+        stand:    L.icon({ iconUrl: 'images/icons/icon-stand.png',    iconSize: [32,32], iconAnchor: [16,16] }),
+        twotier:  L.icon({ iconUrl: 'images/icons/icon-twotier.png',  iconSize: [32,32], iconAnchor: [16,16] }),
+        safeloop: L.icon({ iconUrl: 'images/icons/icon-safeloop.png', iconSize: [32,32], iconAnchor: [16,16] }),
+        water:    svgIcon(SVG.water, 26),
+        mech:     svgIcon(SVG.mech,  26)
       };
 
       const PARKING_TYPES = new Set(['stands', 'safe_loops', 'two-tier', 'rack']);
-
       const ICON_MAP = {
-        stands:     ICONS.stand,
-        rack:       ICONS.rack,
-        safe_loops: ICONS.safeloop,
-        'two-tier': ICONS.twotier
+        stands: ICONS.stand, rack: ICONS.rack,
+        safe_loops: ICONS.safeloop, 'two-tier': ICONS.twotier
       };
 
-      const SERVICES_FI = {
-        'service:bicycle:chain_tool': 'Ketjutyökalu',
-        'service:bicycle:cleaning':   'Pesupaikka',
-        'service:bicycle:diy':        'Työkalut',
-        'service:bicycle:pump':       'Pumppu',
-        'service:bicycle:screwdriver':'Ruuvimeisseli',
-        'service:bicycle:stand':      'Teline',
-        'service:bicycle:tools':      'Työkalut'
-      };
+      // ── Layer refs ────────────────────────────────────────────────────────────
+      // Each is null until its fetch resolves, then holds the Leaflet layer.
+      const layers = { parking: null, baana: null, water: null, mech: null };
 
-      // ── Helper: fetch JSON with basic error handling ──────────────────────────
+      // ── Utility ──────────────────────────────────────────────────────────────
       function loadJSON(url) {
         return fetch(url).then(r => {
-          if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+          if (!r.ok) throw new Error(`HTTP ${r.status} – ${url}`);
           return r.json();
         });
       }
-
-      // ── Helper: line width by zoom ────────────────────────────────────────────
-      function lineWeight(zoom) {
-        return zoom >= 15 ? 6 : zoom >= 12 ? 4 : 2;
-      }
-
-      // ── Helper: midpoint of a coordinate array ────────────────────────────────
+      function lineWeight(z) { return z >= 15 ? 6 : z >= 12 ? 4 : 2; }
       function midpoint(coords) {
-        if (!coords || !coords.length) return null;
-        return coords[Math.floor(coords.length / 2)];
+        return coords?.length ? coords[Math.floor(coords.length / 2)] : null;
+      }
+      function svgTag(body, size = 16) {
+        return `<svg width="${size}" height="${size}" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
       }
 
-      // ── Load all data in parallel ─────────────────────────────────────────────
+      // ── Load all layers in parallel ───────────────────────────────────────────
       Promise.allSettled([
-        loadParkingData(),
-        loadMechData(),
-        loadWaterData(),
-        loadBaanaData()
+        loadParking(), loadMech(), loadWater(), loadBaana()
       ]).then(() => {
-        // Hide loading overlay once all fetches have resolved (or failed gracefully)
-        const overlay = document.getElementById('loading');
-        overlay.classList.add('hidden');
-        setTimeout(() => overlay.remove(), 500);
+        const ov = document.getElementById('loading');
+        ov.classList.add('hidden');
+        setTimeout(() => ov.remove(), 500);
+        wireToggles();
       });
 
       // ── Parking ───────────────────────────────────────────────────────────────
-      function loadParkingData() {
+      function loadParking() {
         return loadJSON('/parking.json').then(json => {
-          const features = json.features;
-          for (let i = 0; i < features.length; i++) {
-            const item = features[i];
-            const props = item.properties;
-            const type = props.bicycle_parking;
-
+          const cluster = L.markerClusterGroup({
+            maxClusterRadius: 200,
+            disableClusteringAtZoom: 17,
+            spiderfyOnMaxZoom: false,
+            chunkedLoading: true
+          });
+          for (const { properties: p } of json.features) {
+            const type = p.bicycle_parking;
             if (!type || !PARKING_TYPES.has(type)) continue;
-
-            const icon = ICON_MAP[type];
-            const mark = L.marker([props.lat, props.lon], { icon });
-
-            if (props.capacity) {
-              mark.bindTooltip(String(props.capacity), {
-                permanent: true,
-                direction: 'right',
-                className: 'marker-label'
+            const mark = L.marker([p.lat, p.lon], { icon: ICON_MAP[type] });
+            if (p.capacity) {
+              mark.bindTooltip(String(p.capacity), {
+                permanent: true, direction: 'right', className: 'marker-label'
               });
             }
-
-            markers.addLayer(mark);
+            cluster.addLayer(mark);
           }
-          map.addLayer(markers);
-        }).catch(e => console.warn('Parking load failed:', e));
+          layers.parking = cluster;
+          map.addLayer(cluster);
+        }).catch(e => console.warn('Parking:', e));
       }
 
-      // ── Mechanical repair points ──────────────────────────────────────────────
-      function loadMechData() {
+      // ── Repair stations ────────────────────────────────────────────────────────
+      function loadMech() {
         return loadJSON('/mech.geojson').then(data => {
-          L.geoJSON(data, {
-            pointToLayer(feature, _latlng) {
+          layers.mech = L.geoJSON(data, {
+            pointToLayer(feature, _ll) {
               const { lat, lon } = feature.properties;
               const marker = L.marker(L.latLng(lat, lon), { icon: ICONS.mech });
 
-              let html = '<b>Palvelut:</b><br>';
-              for (const [key, label] of Object.entries(SERVICES_FI)) {
-                if (feature.properties[key] === 'yes') html += `✔ ${label}<br>`;
-              }
-              marker.bindPopup(html);
+              const rows = Object.entries(SERVICES_FI)
+                .filter(([key]) => feature.properties[key] === 'yes')
+                .map(([, label]) =>
+                  `<div class="popup-service">
+                     ${svgTag(SVG.check, 12)}
+                     ${label}
+                   </div>`
+                ).join('');
+
+              marker.bindPopup(
+                `<div class="popup-title">
+                   ${svgTag(SVG.mech, 18)}
+                   Huoltopiste
+                 </div>
+                 ${rows || '<span style="font-size:12px;color:#999">Ei tietoja palveluista.</span>'}`,
+                { maxWidth: 220 }
+              );
               return marker;
             }
           }).addTo(map);
-        }).catch(e => console.warn('Mech load failed:', e));
+        }).catch(e => console.warn('Mech:', e));
       }
 
-      // ── Water points ──────────────────────────────────────────────────────────
-      function loadWaterData() {
+      // ── Water points ───────────────────────────────────────────────────────────
+      function loadWater() {
         return loadJSON('/water.geojson').then(data => {
-          L.geoJSON(data, {
-            pointToLayer(feature, _latlng) {
+          layers.water = L.geoJSON(data, {
+            pointToLayer(feature, _ll) {
               const { lat, lon } = feature.properties;
-              return L.marker(L.latLng(lat, lon), { icon: ICONS.water });
+              const marker = L.marker(L.latLng(lat, lon), { icon: ICONS.water });
+              marker.bindPopup(
+                `<div class="popup-title">
+                   ${svgTag(SVG.water, 18)}
+                   Vesipiste
+                 </div>`,
+                { maxWidth: 160 }
+              );
+              return marker;
             }
           }).addTo(map);
-        }).catch(e => console.warn('Water load failed:', e));
+        }).catch(e => console.warn('Water:', e));
       }
 
-      // ── Pyöräbaana lines ──────────────────────────────────────────────────────
-      function loadBaanaData() {
+      // ── Pyöräbaana ─────────────────────────────────────────────────────────────
+      function loadBaana() {
         return loadJSON('/baanat.geojson').then(data => {
-          const baanaLayer = L.geoJSON(data, {
+          const baana = L.geoJSON(data, {
             filter: f =>
               f.geometry.type === 'LineString' ||
               f.geometry.type === 'MultiLineString',
-            style: () => ({
-              color: '#a952ce',
-              weight: lineWeight(map.getZoom()),
-              opacity: 1
-            }),
+            style: () => ({ color: '#a952ce', weight: lineWeight(map.getZoom()), opacity: 1 }),
             onEachFeature(feature, layer) {
               const props = feature.properties;
               if (!props) return;
-
               if (props.name) {
                 layer.bindTooltip(props.name, {
-                  permanent: false,
-                  direction: 'center',
-                  className: 'line-tooltip'
+                  permanent: false, direction: 'center', className: 'line-tooltip'
                 });
               }
-
               if (props.ref) {
                 const mid = midpoint(feature.geometry.coordinates);
                 if (mid) {
@@ -473,8 +536,7 @@
                     icon: L.divIcon({
                       className: 'road-icon',
                       html: `<div class="road-shield">${props.ref}</div>`,
-                      iconSize: [24, 24],
-                      iconAnchor: [12, 12]
+                      iconSize: [24, 24], iconAnchor: [12, 12]
                     })
                   }).addTo(map);
                 }
@@ -482,33 +544,56 @@
             }
           }).addTo(map);
 
-          map.on('zoomend', () => {
-            baanaLayer.setStyle({ weight: lineWeight(map.getZoom()) });
-          });
-        }).catch(e => console.warn('Baana load failed:', e));
+          map.on('zoomend', () => baana.setStyle({ weight: lineWeight(map.getZoom()) }));
+          layers.baana = baana;
+        }).catch(e => console.warn('Baana:', e));
       }
 
-      // ── Legend toggle ─────────────────────────────────────────────────────────
+      // ── Layer toggles ──────────────────────────────────────────────────────────
+      function wireToggles() {
+        [
+          ['toggle-parking', 'parking', 'row-parking'],
+          ['toggle-baana',   'baana',   'row-baana'],
+          ['toggle-water',   'water',   'row-water'],
+          ['toggle-mech',    'mech',    'row-mech']
+        ].forEach(([checkId, layerKey, rowId]) => {
+          const cb  = document.getElementById(checkId);
+          const row = document.getElementById(rowId);
+          if (!cb) return;
+
+          cb.addEventListener('change', () => {
+            const layer = layers[layerKey];
+            if (!layer) return;
+            if (cb.checked) {
+              map.addLayer(layer);
+              row.classList.remove('layer-off');
+            } else {
+              map.removeLayer(layer);
+              row.classList.add('layer-off');
+            }
+          });
+        });
+      }
+
+      // ── Legend collapse ────────────────────────────────────────────────────────
       const legend = document.getElementById('legend');
-      const toggle = document.getElementById('legend-toggle');
+      const legendBtn = document.getElementById('legend-toggle');
 
       function toggleLegend() {
-        const expanded = legend.classList.toggle('collapsed') === false;
-        toggle.setAttribute('aria-expanded', String(expanded));
+        const collapsed = legend.classList.toggle('collapsed');
+        legendBtn.setAttribute('aria-expanded', String(!collapsed));
       }
-
-      toggle.addEventListener('click', toggleLegend);
-      toggle.addEventListener('keydown', e => {
+      legendBtn.addEventListener('click', toggleLegend);
+      legendBtn.addEventListener('keydown', e => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleLegend(); }
       });
 
-      // ── Service Worker ────────────────────────────────────────────────────────
+      // ── Service Worker ─────────────────────────────────────────────────────────
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('service-worker.js').catch(() => {});
       }
     }
 
-    // Libraries are already loaded above — call directly
     initMap();
   </script>
 </body>
