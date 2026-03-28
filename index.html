@@ -1,339 +1,515 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fi">
 
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta http-equiv="last-modified" content="Sun, 25 August 2024 14:00:00 GMT" />
-    <meta http-equiv="cache-control" content="no-cache" />
-    <meta http-equiv="Expires" content="600" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tellinki.com – Runkolukittavat pyörätelineet pääkaupunkiseudulla">
+  <meta name="theme-color" content="#0050aa">
 
-    <title>Tellinki.com</title>
-    <meta name="description" content="Tellinki.com - Runkolukittavat pyörätelineet pääkaupunkiseudulla">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0050aa">
-    <link rel="manifest" href="manifest.json">
+  <title>Tellinki.com</title>
 
-    <!-- Android -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <link rel="icon" sizes="192x192" href="images/icons/icon-192x192.png">
-    <link rel="icon" sizes="512x512" href="images/icons/icon-512x512.png">
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
 
-    <!-- iOS -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="Tellinki.com">
-    <link rel="apple-touch-icon-precomposed" href="images/icons/icon-512x512.png">
-    <link rel="mask-icon" href="images/icons/desktop/safari-pinned-tab.svg" color="#5bbad5">
+  <!-- Android -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" sizes="192x192" href="images/icons/icon-192x192.png">
+  <link rel="icon" sizes="512x512" href="images/icons/icon-512x512.png">
 
-    <!-- MS -->
-    <meta name="msapplication-tap-highlight" content="no">
-    <meta name="msapplication-TileImage" content="images/icons/icon-150x150.png">
-    <meta name="msapplication-TileColor" content="#0050aa">
+  <!-- iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tellinki">
+  <link rel="apple-touch-icon" href="images/icons/icon-512x512.png">
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="images/icons/icon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="images/icons/icon-16x16.png">
+  <!-- MS -->
+  <meta name="msapplication-tap-highlight" content="no">
+  <meta name="msapplication-TileImage" content="images/icons/icon-150x150.png">
+  <meta name="msapplication-TileColor" content="#0050aa">
 
-    <!-- Leaflet -->
-    <link rel="stylesheet" href="css/normalize.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
-    <link rel="stylesheet" href="css/L.Control.Locate.min.css">
-    <style>
-        /* Style for the map container */
-        #map {
-            height: 100vh;
-            width: 100vw;
-        }
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="images/icons/icon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="images/icons/icon-16x16.png">
 
-        /* Cluster styles */
-        .marker-cluster-small,
-        .marker-cluster-medium,
-        .marker-cluster-large {
-            background-color: rgba(0, 80, 170, 0.2);
-        }
+  <!-- Leaflet CSS — loaded before JS to avoid FOUC -->
+  <link rel="stylesheet" href="css/normalize.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css">
+  <link rel="stylesheet" href="css/L.Control.Locate.min.css">
 
-        .marker-cluster-small div,
-        .marker-cluster-medium div,
-        .marker-cluster-large div {
-            color: #FFF;
-            background-color: #0050aa;
-        }
+  <style>
+    /* ─── Reset & base ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* Tooltip styles */
-        .leaflet-tooltip-right:before {
-            border: 0px;
-        }
+    :root {
+      --blue:      #0050aa;
+      --blue-light: rgba(0, 80, 170, 0.15);
+      --blue-mid:  rgba(0, 80, 170, 0.6);
+      --purple:    #a952ce;
+      --white:     #ffffff;
+      --text:      #1a1a2e;
+      --shadow:    0 2px 12px rgba(0,0,0,.18);
+      --radius:    10px;
+      --font:      system-ui, 'Segoe UI', sans-serif;
+    }
 
-        .leaflet-tooltip.marker-label {
-            top: -16px;
-            font-size: 10px;
-            font-weight: bold;
-            text-align: center;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            margin: 0px;
-            padding: 4px;
-            line-height: 1.8;
-            color: #0050aa;
-            background-color: #FFF;
-        }
+    html, body { height: 100%; overflow: hidden; font-family: var(--font); }
 
-        /* Road shield styles */
-        .road-shield {
-            background: #fcb919;
-            border: 2px solid black;
-            color: black;
-            font-weight: bold;
-            font-size: 10px;
-            text-align: center;
-            line-height: 20px;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-    </style>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-    <script src="js/leaflet-providers.min.js"></script>
-    <script src="js/L.Control.Locate.min.js"></script>
+    /* ─── Map ───────────────────────────────────────────── */
+    #map {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    /* ─── Loading overlay ──────────────────────────────── */
+    #loading {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: var(--blue);
+      color: var(--white);
+      font-size: 1rem;
+      letter-spacing: .04em;
+      transition: opacity .4s ease;
+    }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 4px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Cluster styles ───────────────────────────────── */
+    .marker-cluster-small,
+    .marker-cluster-medium,
+    .marker-cluster-large { background-color: var(--blue-light); }
+
+    .marker-cluster-small div,
+    .marker-cluster-medium div,
+    .marker-cluster-large div {
+      color: var(--white);
+      background-color: var(--blue);
+      font-weight: 700;
+    }
+
+    /* ─── Tooltip / capacity badge ─────────────────────── */
+    .leaflet-tooltip-right::before { border: 0; }
+
+    .leaflet-tooltip.marker-label {
+      top: -16px;
+      font-size: 10px;
+      font-weight: 700;
+      text-align: center;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      padding: 0;
+      line-height: 18px;
+      color: var(--blue);
+      background: var(--white);
+      border: 1.5px solid var(--blue);
+      box-shadow: 0 1px 4px rgba(0,0,0,.2);
+    }
+
+    /* ─── Road shield (pyöräbaana ref) ─────────────────── */
+    .road-shield {
+      background: #fcb919;
+      border: 2px solid #111;
+      color: #111;
+      font-weight: 700;
+      font-size: 10px;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ─── Info bar ─────────────────────────────────────── */
+    .info-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 800;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border-top: 1px solid rgba(0,80,170,.15);
+      padding: 6px 12px;
+      font-size: 11px;
+      color: #444;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 1.4;
+    }
+    .info-bar strong { color: var(--blue); }
+    .info-bar a { color: var(--blue); }
+
+    /* ─── Legend panel ─────────────────────────────────── */
+    #legend {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 800;
+      background: rgba(255,255,255,.95);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--text);
+      min-width: 155px;
+      transition: transform .25s ease, opacity .25s ease;
+    }
+    #legend.collapsed { transform: translateY(-6px); opacity: .85; }
+
+    #legend-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--blue);
+      cursor: pointer;
+      user-select: none;
+      gap: 8px;
+    }
+    #legend-toggle svg { transition: transform .2s; flex-shrink: 0; }
+    #legend.collapsed #legend-toggle svg { transform: rotate(-90deg); }
+
+    #legend-body { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
+    #legend.collapsed #legend-body { display: none; }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+    }
+    .legend-item img { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
+    .legend-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .legend-line {
+      width: 18px; height: 4px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .legend-sep {
+      border: none;
+      border-top: 1px solid #e0e0e0;
+      margin: 3px 0;
+    }
+
+    /* ─── Mobile tweaks ────────────────────────────────── */
+    @media (max-width: 480px) {
+      #legend { top: auto; bottom: 38px; right: 8px; left: 8px; min-width: 0; }
+      .info-bar { font-size: 10px; padding: 5px 10px; }
+      /* Push Leaflet controls so they don't overlap legend */
+      .leaflet-top.leaflet-left { top: 4px; left: 4px; }
+    }
+
+    /* Prevent default tap highlight on map */
+    #map { -webkit-tap-highlight-color: transparent; }
+  </style>
 </head>
 
 <body>
-    <main>
-        <div id="map"></div>
-    </main>
-    <noscript>Turn on JavaScript to access this site content.</noscript>
-    <script>
-        // Initialize the map with leaflet.js
-        var map = L.map('map', { minZoom: 12, maxZoom: 18 });
 
-        // Add marker clustering for performance
-        var markers = L.markerClusterGroup({ maxClusterRadius: 200, disableClusteringAtZoom: 17, spiderfy_on_max_zoom: false });
+  <!-- Loading overlay -->
+  <div id="loading" role="status" aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
+    <span>Ladataan karttaa…</span>
+  </div>
 
-        // Center the map to show Helsinki well
-        map.setView([60.2097412, 24.98643], 10);
+  <!-- Map -->
+  <main>
+    <div id="map" role="application" aria-label="Pyöräpysäköintikartta Helsingissä"></div>
+  </main>
 
-        // Set the map view bounds (Desktop size)
-        map.setMaxBounds(L.latLngBounds(L.latLng(60.3300069, 25.5136872), L.latLng(60.0888172, 24.4589996)));
+  <!-- Info bar (replaces L.Control.Textbox) -->
+  <div class="info-bar" role="contentinfo">
+    <span>
+      <strong>Aineisto päivitetty 18.05.2025.</strong>
+      Ylläpitäjä Tommi Siimeslehto
+      (<a href="mailto:hello@tellinki.com">hello@tellinki.com</a>).
+      Aineistoa voi muokata
+      <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMapin</a> kautta.
+    </span>
+  </div>
 
-        // Set the desired tiles with attribution
-        L.tileLayer.provider('OpenStreetMap.DE').addTo(map);
+  <!-- Legend -->
+  <div id="legend" role="complementary" aria-label="Karttaselite">
+    <div id="legend-toggle" role="button" tabindex="0" aria-expanded="true" aria-controls="legend-body">
+      Selite
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+        <path d="M2 4l4 4 4-4" stroke="#0050aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div id="legend-body">
+      <div class="legend-item"><img src="images/icons/icon-stand.png" alt=""> Runkolukitusteline</div>
+      <div class="legend-item"><img src="images/icons/icon-rack.png" alt=""> Pyöräteline</div>
+      <div class="legend-item"><img src="images/icons/icon-safeloop.png" alt=""> Safe Loop</div>
+      <div class="legend-item"><img src="images/icons/icon-twotier.png" alt=""> Kaksitasoinen</div>
+      <hr class="legend-sep">
+      <div class="legend-item"><img src="images/icons/icon-mech.png" alt=""> Huoltopiste</div>
+      <div class="legend-item"><img src="images/icons/icon-water.png" alt=""> Vesipiste</div>
+      <hr class="legend-sep">
+      <div class="legend-item">
+        <div class="legend-line" style="background:#a952ce;"></div>
+        Pyöräbaana
+      </div>
+    </div>
+  </div>
 
-        // Allow asking for the user's current location
-        L.control.locate().addTo(map);
+  <noscript>
+    <style>#loading{display:none}</style>
+    <p style="padding:2rem;font-family:sans-serif">
+      Ota JavaScript käyttöön käyttääksesi tätä sivustoa.
+    </p>
+  </noscript>
 
-        // Add info text
-        L.Control.Textbox = L.Control.extend({
-            onAdd: function(map) {
-                var text = L.DomUtil.create('div', 'info-text'); // Added a class for styling
-                text.id = "info_text";
-                text.innerHTML = "<strong>Aineisto päivitetty 18.05.2025. Ylläpitäjä Tommi Siimeslehto (hello@tellinki.com), aineistoa voi muokata OpenStreetMapin kautta.</strong>";
-                return text;
-            },
-            onRemove: function(map) {
-            }
+  <!-- Leaflet libraries: NOT deferred — must be synchronously available before initMap runs -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+  <script src="js/leaflet-providers.min.js"></script>
+  <script src="js/L.Control.Locate.min.js"></script>
+
+  <!-- Init script runs after the libraries above are parsed -->
+  <script>
+    function initMap() {
+      // ── Map setup ────────────────────────────────────────────────────────────
+      const map = L.map('map', {
+        minZoom: 12,
+        maxZoom: 18,
+        zoomControl: true,
+        attributionControl: true
+      });
+
+      map.setView([60.2097412, 24.98643], 12);
+      map.setMaxBounds(L.latLngBounds(
+        L.latLng(60.330, 25.514),
+        L.latLng(60.089, 24.459)
+      ));
+
+      L.tileLayer.provider('OpenStreetMap.DE').addTo(map);
+      L.control.locate({ position: 'topleft' }).addTo(map);
+
+      // ── Clustering ───────────────────────────────────────────────────────────
+      const markers = L.markerClusterGroup({
+        maxClusterRadius: 200,
+        disableClusteringAtZoom: 17,
+        spiderfyOnMaxZoom: false,
+        chunkedLoading: true          // don't block the UI thread
+      });
+
+      // ── Icons (defined once, reused) ─────────────────────────────────────────
+      const ICONS = {
+        rack:      L.icon({ iconUrl: 'images/icons/icon-rack.png',      iconSize: [32, 32], iconAnchor: [16, 16] }),
+        stand:     L.icon({ iconUrl: 'images/icons/icon-stand.png',     iconSize: [32, 32], iconAnchor: [16, 16] }),
+        twotier:   L.icon({ iconUrl: 'images/icons/icon-twotier.png',   iconSize: [32, 32], iconAnchor: [16, 16] }),
+        safeloop:  L.icon({ iconUrl: 'images/icons/icon-safeloop.png',  iconSize: [32, 32], iconAnchor: [16, 16] }),
+        mech:      L.icon({ iconUrl: 'images/icons/icon-mech.png',      iconSize: [16, 16], iconAnchor: [8, 8] }),
+        water:     L.icon({ iconUrl: 'images/icons/icon-water.png',     iconSize: [16, 16], iconAnchor: [8, 8] })
+      };
+
+      const PARKING_TYPES = new Set(['stands', 'safe_loops', 'two-tier', 'rack']);
+
+      const ICON_MAP = {
+        stands:     ICONS.stand,
+        rack:       ICONS.rack,
+        safe_loops: ICONS.safeloop,
+        'two-tier': ICONS.twotier
+      };
+
+      const SERVICES_FI = {
+        'service:bicycle:chain_tool': 'Ketjutyökalu',
+        'service:bicycle:cleaning':   'Pesupaikka',
+        'service:bicycle:diy':        'Työkalut',
+        'service:bicycle:pump':       'Pumppu',
+        'service:bicycle:screwdriver':'Ruuvimeisseli',
+        'service:bicycle:stand':      'Teline',
+        'service:bicycle:tools':      'Työkalut'
+      };
+
+      // ── Helper: fetch JSON with basic error handling ──────────────────────────
+      function loadJSON(url) {
+        return fetch(url).then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+          return r.json();
         });
-        L.control.textbox = function(opts) {
-            return new L.Control.Textbox(opts);
-        };
-        L.control.textbox({ position: 'bottomleft' }).addTo(map);
+      }
 
-        // Add custom icons for rack and stand markers
-        var rackIcon = L.icon({ iconUrl: 'images/icons/icon-rack.png', iconSize: [32, 32] });
-        var standIcon = L.icon({ iconUrl: 'images/icons/icon-stand.png', iconSize: [32, 32] });
-        var twotierIcon = L.icon({ iconUrl: 'images/icons/icon-twotier.png', iconSize: [32, 32] });
-        var safeloopIcon = L.icon({ iconUrl: 'images/icons/icon-safeloop.png', iconSize: [32, 32] });
-        var mechIcon = L.icon({ iconUrl: 'images/icons/icon-mech.png', iconSize: [16, 16] });
-        var waterIcon = L.icon({ iconUrl: 'images/icons/icon-water.png', iconSize: [16, 16] });
+      // ── Helper: line width by zoom ────────────────────────────────────────────
+      function lineWeight(zoom) {
+        return zoom >= 15 ? 6 : zoom >= 12 ? 4 : 2;
+      }
 
-        // Fetch mechanical repair points
-        fetch('/mech.geojson')
-            .then(response => response.json())
-            .then(data => {
-                L.geoJSON(data, {
-                    pointToLayer: function (feature, latlng) {
-                        var lat = feature.properties.lat;
-                        var lon = feature.properties.lon;
+      // ── Helper: midpoint of a coordinate array ────────────────────────────────
+      function midpoint(coords) {
+        if (!coords || !coords.length) return null;
+        return coords[Math.floor(coords.length / 2)];
+      }
 
-                        // Create a latLng object
-                        var latLng = L.latLng(lat, lon);
+      // ── Load all data in parallel ─────────────────────────────────────────────
+      Promise.allSettled([
+        loadParkingData(),
+        loadMechData(),
+        loadWaterData(),
+        loadBaanaData()
+      ]).then(() => {
+        // Hide loading overlay once all fetches have resolved (or failed gracefully)
+        const overlay = document.getElementById('loading');
+        overlay.classList.add('hidden');
+        setTimeout(() => overlay.remove(), 500);
+      });
 
-                        // Create the marker with the custom icon
-                        var marker = L.marker(latLng, { icon: mechIcon });
+      // ── Parking ───────────────────────────────────────────────────────────────
+      function loadParkingData() {
+        return loadJSON('/parking.json').then(json => {
+          const features = json.features;
+          for (let i = 0; i < features.length; i++) {
+            const item = features[i];
+            const props = item.properties;
+            const type = props.bicycle_parking;
 
-                        // Create the popup content based on properties
-                        var popupContent = `<b>Palvelut:</b> <br>`;
+            if (!type || !PARKING_TYPES.has(type)) continue;
 
-                        // Manually map each service key to Finnish name
-                        var services = {
-                            "service:bicycle:chain_tool": "Ketjutyökalu",
-                            "service:bicycle:cleaning": "Pesupaikka",
-                            "service:bicycle:diy": "Työkalut",
-                            "service:bicycle:pump": "Pumppu",
-                            "service:bicycle:screwdriver": "Ruuvimeisseli",
-                            "service:bicycle:stand": "Teline",
-                            "service:bicycle:tools": "Työkalut"
-                        };
+            const icon = ICON_MAP[type];
+            const mark = L.marker([props.lat, props.lon], { icon });
 
-                        // Loop through the services and add to popup content if available
-                        for (var service in services) {
-                            if (feature.properties[service] === "yes") {
-                                popupContent += `✔ ${services[service]} saatavilla<br>`;
-                            }
-                        }
-
-                        // Bind the popup to the marker
-                        marker.bindPopup(popupContent);
-
-                        // Return the marker with the popup bound
-                        return marker;
-                    }
-                }).addTo(map);
-            })
-            .catch(error => console.error('Error loading the GeoJSON file:', error));
-
-        // Fetch water points
-        fetch('/water.geojson')
-            .then(response => response.json())
-            .then(data => {
-                L.geoJSON(data, {
-                    pointToLayer: function (feature, latlng) {
-                        var lat = feature.properties.lat;
-                        var lon = feature.properties.lon;
-
-                        // Create a latLng object
-                        var latLng = L.latLng(lat, lon);
-
-                        // Create the marker with the custom icon
-                        var marker = L.marker(latLng, { icon: waterIcon });
-
-                        // Return the marker with the popup bound
-                        return marker;
-                    }
-                }).addTo(map);
-            })
-            .catch(error => console.error('Error loading the GeoJSON file:', error));
-
-        // Fetch baanat lines
-        fetch('/baanat.geojson')
-            .then(response => response.json())
-            .then(data => {
-                // Function to determine line width based on zoom level
-                function getLineWidth(zoom) {
-                    if (zoom >= 15) return 6;
-                    if (zoom >= 12) return 4;
-                    if (zoom >= 10) return 2;
-                    return 2;
-                }
-
-                const geojsonLayer = L.geoJSON(data, {
-                    filter: function(feature) {
-                        return feature.geometry.type === 'LineString' || feature.geometry.type === 'MultiLineString';
-                    },
-                    style: function(feature) {
-                        return {
-                            color: "#a952ce",
-                            weight: getLineWidth(map.getZoom()),
-                            opacity: 1 
-                        };
-                    },
-                    onEachFeature: function(feature, layer) {
-                        if (feature.properties) {
-                            // Show name when hovering (tooltip)
-                            if (feature.properties.name) {
-                                layer.bindTooltip(feature.properties.name, {
-                                    permanent: false, // Only show when hovering
-                                    direction: "center",
-                                    className: "line-tooltip"
-                                });
-                            }
-
-                            // Add ref number at midpoint
-                            if (feature.properties.ref) {
-                                const midpoint = getLineMidpoint(feature.geometry.coordinates);
-
-                                if (midpoint) {
-                                    const icon = L.divIcon({
-                                        className: 'road-icon',
-                                        html: `<div class="road-shield">${feature.properties.ref}</div>`,
-                                        iconSize: [24, 24],
-                                        iconAnchor: [12, 12]
-                                    });
-
-                                    L.marker([midpoint[1], midpoint[0]], { icon }).addTo(map);
-                                }
-                            }
-                        }
-                    }
-                }).addTo(map);
-
-                // Update line width on zoom
-                map.on('zoomend', function() {
-                    const zoom = map.getZoom();
-                    geojsonLayer.setStyle({
-                        weight: getLineWidth(zoom)
-                    });
-                });
-
-                // Function to get line midpoint
-                function getLineMidpoint(coords) {
-                    if (!coords.length) return null;
-
-                    const midIndex = Math.floor(coords.length / 2);
-                    return coords[midIndex];  // Return the middle coordinate
-                }
-            })
-            .catch(error => {
-                console.error('Error loading the GeoJSON data:', error);
-            });
-
-        // Fetch parking information from the json
-        fetch('/parking.json').then((response) => response.json()).then((json) => {
-            for (var i = 0; i < json['features'].length; i++) {
-                var item = json['features'][i];
-
-                // Skip other than stands or racks or two-tiers or safe_loops
-                var amenity = item['properties']['bicycle_parking'];
-                if (amenity == null || !['stands', 'safe_loops', 'two-tier', 'rack'].includes(amenity)) continue;
-
-                // Add custom marker item to indicate parking
-                var icon;
-                if (amenity === 'stands') {
-                    icon = standIcon;
-                } else if (amenity === 'rack') {
-                    icon = rackIcon;
-                } else if (amenity === 'safe_loops') {
-                    icon = safeloopIcon;
-                } else if (amenity === 'two-tier') {
-                    icon = twotierIcon;
-                }
-
-                // Get the coordinates and create marker
-                var mark = L.marker([item['properties']['lat'], item['properties']['lon']], { icon: icon });
-
-                // Add capacity indicator to icon (if available)
-                var capacity = item['properties']['capacity']
-                if (capacity) mark.bindTooltip(capacity, { permanent: true, direction: 'right', className: 'marker-label' });
-
-                // Finally, add the marker to the map layer
-                markers.addLayer(mark);
+            if (props.capacity) {
+              mark.bindTooltip(String(props.capacity), {
+                permanent: true,
+                direction: 'right',
+                className: 'marker-label'
+              });
             }
-            // Add cluster to map
-            map.addLayer(markers);
-        })
-        .catch(error => console.error('Error fetching the GeoJSON:', error));  // Handle errors
 
-        // Register serviceWorker to allow installing as app
-        if ('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js');
-    </script>
+            markers.addLayer(mark);
+          }
+          map.addLayer(markers);
+        }).catch(e => console.warn('Parking load failed:', e));
+      }
+
+      // ── Mechanical repair points ──────────────────────────────────────────────
+      function loadMechData() {
+        return loadJSON('/mech.geojson').then(data => {
+          L.geoJSON(data, {
+            pointToLayer(feature, _latlng) {
+              const { lat, lon } = feature.properties;
+              const marker = L.marker(L.latLng(lat, lon), { icon: ICONS.mech });
+
+              let html = '<b>Palvelut:</b><br>';
+              for (const [key, label] of Object.entries(SERVICES_FI)) {
+                if (feature.properties[key] === 'yes') html += `✔ ${label}<br>`;
+              }
+              marker.bindPopup(html);
+              return marker;
+            }
+          }).addTo(map);
+        }).catch(e => console.warn('Mech load failed:', e));
+      }
+
+      // ── Water points ──────────────────────────────────────────────────────────
+      function loadWaterData() {
+        return loadJSON('/water.geojson').then(data => {
+          L.geoJSON(data, {
+            pointToLayer(feature, _latlng) {
+              const { lat, lon } = feature.properties;
+              return L.marker(L.latLng(lat, lon), { icon: ICONS.water });
+            }
+          }).addTo(map);
+        }).catch(e => console.warn('Water load failed:', e));
+      }
+
+      // ── Pyöräbaana lines ──────────────────────────────────────────────────────
+      function loadBaanaData() {
+        return loadJSON('/baanat.geojson').then(data => {
+          const baanaLayer = L.geoJSON(data, {
+            filter: f =>
+              f.geometry.type === 'LineString' ||
+              f.geometry.type === 'MultiLineString',
+            style: () => ({
+              color: '#a952ce',
+              weight: lineWeight(map.getZoom()),
+              opacity: 1
+            }),
+            onEachFeature(feature, layer) {
+              const props = feature.properties;
+              if (!props) return;
+
+              if (props.name) {
+                layer.bindTooltip(props.name, {
+                  permanent: false,
+                  direction: 'center',
+                  className: 'line-tooltip'
+                });
+              }
+
+              if (props.ref) {
+                const mid = midpoint(feature.geometry.coordinates);
+                if (mid) {
+                  L.marker([mid[1], mid[0]], {
+                    icon: L.divIcon({
+                      className: 'road-icon',
+                      html: `<div class="road-shield">${props.ref}</div>`,
+                      iconSize: [24, 24],
+                      iconAnchor: [12, 12]
+                    })
+                  }).addTo(map);
+                }
+              }
+            }
+          }).addTo(map);
+
+          map.on('zoomend', () => {
+            baanaLayer.setStyle({ weight: lineWeight(map.getZoom()) });
+          });
+        }).catch(e => console.warn('Baana load failed:', e));
+      }
+
+      // ── Legend toggle ─────────────────────────────────────────────────────────
+      const legend = document.getElementById('legend');
+      const toggle = document.getElementById('legend-toggle');
+
+      function toggleLegend() {
+        const expanded = legend.classList.toggle('collapsed') === false;
+        toggle.setAttribute('aria-expanded', String(expanded));
+      }
+
+      toggle.addEventListener('click', toggleLegend);
+      toggle.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleLegend(); }
+      });
+
+      // ── Service Worker ────────────────────────────────────────────────────────
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js').catch(() => {});
+      }
+    }
+
+    // Libraries are already loaded above — call directly
+    initMap();
+  </script>
 </body>
-
 </html>
-``` ▋
