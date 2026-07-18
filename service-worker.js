@@ -1,68 +1,92 @@
 /*
- Copyright 2016 Google Inc. All Rights Reserved.
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
- http://www.apache.org/licenses/LICENSE-2.0
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
+ * Tellinki.com service worker.
+ *
+ * Strategy:
+ *  - App shell (HTML/CSS/JS/icons): cache-first, so the app opens offline.
+ *  - Data files (parking.json, *.geojson, data-meta.json): network-first,
+ *    so fresh data actually reaches users; cache is the offline fallback.
+ *  - Cross-origin (map tiles, live city-bike API): straight to network,
+ *    never cached.
+ *
+ * Bump VERSION when the app shell changes to roll the cache.
  */
+const VERSION = 'tellinki-v2.0.0';
+const SHELL_CACHE = `shell-${VERSION}`;
+const DATA_CACHE = `data-${VERSION}`;
 
-// Names of the two caches used in this version of the service worker.
-// Change to v2, etc. when you update any of the local resources, which will
-// in turn trigger the install event again.
-const PRECACHE = 'precache-v1';
-const RUNTIME = 'runtime';
+const SHELL_URLS = [
+  './',
+  'index.html',
+  'manifest.json',
+  'css/style.css',
+  'css/leaflet.css',
+  'css/MarkerCluster.css',
+  'css/MarkerCluster.Default.css',
+  'css/L.Control.Locate.min.css',
+  'css/images/marker-icon.png',
+  'css/images/marker-icon-2x.png',
+  'css/images/marker-shadow.png',
+  'js/leaflet.js',
+  'js/leaflet.markercluster.js',
+  'js/L.Control.Locate.min.js',
+  'js/app.js',
+  'images/icons/icon-192x192.png',
+  'images/icons/icon-stand.png',
+  'images/icons/icon-rack.png',
+  'images/icons/icon-safeloop.png',
+  'images/icons/icon-twotier.png'
+];
 
-// A list of local resources we always want to be cached.
-const PRECACHE_URLS = ['index.html'];
+const DATA_RE = /\/(parking\.json|[^/]+\.geojson|data-meta\.json)$/;
 
-// The install handler takes care of precaching the resources we always need.
 self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(PRECACHE)
-            .then(cache => cache.addAll(PRECACHE_URLS))
-            .then(self.skipWaiting())
-    );
+  event.waitUntil(
+    caches.open(SHELL_CACHE)
+      .then(cache => cache.addAll(SHELL_URLS))
+      .then(() => self.skipWaiting())
+  );
 });
 
-// The activate handler takes care of cleaning up old caches.
 self.addEventListener('activate', event => {
-    const currentCaches = [PRECACHE, RUNTIME];
-    event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return cacheNames.filter(cacheName => !currentCaches.includes(cacheName));
-        }).then(cachesToDelete => {
-            return Promise.all(cachesToDelete.map(cacheToDelete => {
-                return caches.delete(cacheToDelete);
-            }));
-        }).then(() => self.clients.claim())
-    );
+  const keep = [SHELL_CACHE, DATA_CACHE];
+  event.waitUntil(
+    caches.keys()
+      .then(names => Promise.all(
+        names.filter(n => !keep.includes(n)).map(n => caches.delete(n))
+      ))
+      .then(() => self.clients.claim())
+  );
 });
 
-// The fetch handler serves responses for same-origin resources from a cache.
-// If no response is found, it populates the runtime cache with the response
-// from the network before returning it to the page.
+async function cacheFirst(request) {
+  const cached = await caches.match(request, { ignoreSearch: true });
+  if (cached) return cached;
+  const response = await fetch(request);
+  if (response.ok) {
+    const cache = await caches.open(SHELL_CACHE);
+    cache.put(request, response.clone());
+  }
+  return response;
+}
+
+async function networkFirst(request) {
+  const cache = await caches.open(DATA_CACHE);
+  try {
+    const response = await fetch(request);
+    if (response.ok) cache.put(request, response.clone());
+    return response;
+  } catch (err) {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    throw err;
+  }
+}
+
 self.addEventListener('fetch', event => {
-    // Skip cross-origin requests, like those for Google Analytics.
-    if (event.request.url.startsWith(self.location.origin)) {
-        event.respondWith(
-            caches.match(event.request).then(cachedResponse => {
-                if (cachedResponse) {
-                    return cachedResponse;
-                }
-                return caches.open(RUNTIME).then(cache => {
-                    return fetch(event.request).then(response => {
-                        // Put a copy of the response in the runtime cache.
-                        return cache.put(event.request, response.clone()).then(() => {
-                            return response;
-                        });
-                    });
-                });
-            })
-        );
-    }
+  const { request } = event;
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return; // tiles, live APIs: network only
+
+  event.respondWith(DATA_RE.test(url.pathname) ? networkFirst(request) : cacheFirst(request));
 });
