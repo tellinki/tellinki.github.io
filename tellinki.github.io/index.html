@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fi">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tellinki.com – Runkolukittavat pyörätelineet pääkaupunkiseudulla">
+  <meta name="theme-color" content="#0050aa">
+
+  <title>Tellinki.com</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Android -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" sizes="192x192" href="images/icons/icon-192x192.png">
+  <link rel="icon" sizes="512x512" href="images/icons/icon-512x512.png">
+
+  <!-- iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tellinki">
+  <link rel="apple-touch-icon" href="images/icons/icon-512x512.png">
+
+  <!-- MS -->
+  <meta name="msapplication-tap-highlight" content="no">
+  <meta name="msapplication-TileImage" content="images/icons/icon-150x150.png">
+  <meta name="msapplication-TileColor" content="#0050aa">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="images/icons/icon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="images/icons/icon-16x16.png">
+
+  <!-- Leaflet + plugins (self-hosted) -->
+  <link rel="stylesheet" href="css/leaflet.css">
+  <link rel="stylesheet" href="css/MarkerCluster.css">
+  <link rel="stylesheet" href="css/MarkerCluster.Default.css">
+  <link rel="stylesheet" href="css/L.Control.Locate.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <div id="loading" role="status" aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
+    <span>Ladataan karttaa…</span>
+  </div>
+
+  <main>
+    <div id="map" role="application" aria-label="Pyöräpysäköintikartta Helsingissä"></div>
+  </main>
+
+  <div id="toast" role="alert" hidden></div>
+
+  <div class="info-bar" role="contentinfo">
+    <strong>Aineisto päivitetty <span id="data-updated">18.07.2026</span>.</strong>
+    Ylläpitäjä Tommi Siimeslehto
+    (<a href="mailto:hello@tellinki.com">hello@tellinki.com</a>).
+    Aineistoa voi muokata
+    <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMapin</a> kautta.
+  </div>
+
+  <!-- ── Legend ────────────────────────────────────────────────────────────── -->
+  <div id="legend" role="complementary" aria-label="Tasot ja selite">
+
+    <div id="legend-toggle" role="button" tabindex="0"
+         aria-expanded="true" aria-controls="legend-body">
+      Tasot &amp; selite
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+        <path d="M2 4l4 4 4-4" stroke="#0050aa" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <div id="legend-body">
+
+      <!-- Parking -->
+      <div class="layer-row" id="row-parking">
+        <div class="layer-row-left">
+          <img class="legend-icon-img" src="images/icons/icon-stand.png" alt="">
+          <span class="layer-label">Pyöräpysäköinti</span>
+        </div>
+        <label class="toggle" aria-label="Näytä pyöräpysäköinti">
+          <input type="checkbox" id="toggle-parking" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="layer-sub" id="sub-parking">
+        <div class="sub-item"><img src="images/icons/icon-stand.png" alt=""> Runkolukitusteline</div>
+        <div class="sub-item"><img src="images/icons/icon-rack.png" alt=""> Runkolukitustuki</div>
+        <div class="sub-item"><img src="images/icons/icon-safeloop.png" alt=""> "Safe Loop"</div>
+        <div class="sub-item"><img src="images/icons/icon-twotier.png" alt=""> Kaksitasoinen</div>
+        <label class="covered-row" for="covered-filter">
+          <input type="checkbox" id="covered-filter">
+          Vain katetut paikat
+        </label>
+      </div>
+
+      <hr class="legend-sep">
+
+      <!-- City bikes (live) -->
+      <div class="layer-row layer-off" id="row-citybikes">
+        <div class="layer-row-left">
+          <span class="cb-legend-icon" aria-hidden="true">3</span>
+          <span class="layer-label">Kaupunkipyörät</span>
+          <span class="live-dot" title="Reaaliaikainen aineisto" aria-label="Reaaliaikainen aineisto"></span>
+        </div>
+        <label class="toggle" aria-label="Näytä kaupunkipyöräasemat">
+          <input type="checkbox" id="toggle-citybikes">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <hr class="legend-sep">
+
+      <!-- Baana -->
+      <div class="layer-row" id="row-baana">
+        <div class="layer-row-left">
+          <div class="legend-line-swatch" style="background:var(--orange)"></div>
+          <span class="layer-label">Pyöräbaana</span>
+        </div>
+        <label class="toggle" aria-label="Näytä pyöräbaanat">
+          <input type="checkbox" id="toggle-baana" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <hr class="legend-sep">
+
+      <!-- Water -->
+      <div class="layer-row" id="row-water">
+        <div class="layer-row-left">
+          <svg class="legend-icon-svg" viewBox="0 0 20 20" fill="none"
+               xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="10" cy="10" r="9" fill="#0050aa"/>
+            <path d="M10 4.5c0 0-4.5 4.5-4.5 7a4.5 4.5 0 0 0 9 0c0-2.5-4.5-7-4.5-7z"
+                  fill="white"/>
+          </svg>
+          <span class="layer-label">Vesipisteet</span>
+        </div>
+        <label class="toggle" aria-label="Näytä vesipisteet">
+          <input type="checkbox" id="toggle-water" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <hr class="legend-sep">
+
+      <!-- Repair -->
+      <div class="layer-row" id="row-mech">
+        <div class="layer-row-left">
+          <svg class="legend-icon-svg" viewBox="0 0 20 20" fill="none"
+               xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="10" cy="10" r="9" fill="#0050aa"/>
+            <path d="M13.2 6.8a2.8 2.8 0 0 0-3.6 3.6L5.5 14.5l.8.8 4.1-4.1a2.8 2.8 0 0 0 3.6-3.6l-1.6 1.6-1.2-1.2 1.6-1.6z"
+                  fill="white" fill-rule="evenodd"/>
+          </svg>
+          <span class="layer-label">Huoltopisteet</span>
+        </div>
+        <label class="toggle" aria-label="Näytä huoltopisteet">
+          <input type="checkbox" id="toggle-mech" checked>
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+    </div><!-- /legend-body -->
+  </div><!-- /legend -->
+
+  <noscript>
+    <style>#loading{display:none}</style>
+    <p style="padding:2rem;font-family:sans-serif">Ota JavaScript käyttöön käyttääksesi tätä sivustoa.</p>
+  </noscript>
+
+  <script src="js/leaflet.js"></script>
+  <script src="js/leaflet.markercluster.js"></script>
+  <script src="js/L.Control.Locate.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
