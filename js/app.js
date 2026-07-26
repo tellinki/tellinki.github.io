@@ -97,14 +97,58 @@
   }
 
   // ── Map ───────────────────────────────────────────────────────────────────
+  // Layer visibility is encoded in the URL hash after the view, using one
+  // letter per layer: #12/60.21/24.98/p,b,w  ('-' = all off, omitted = default)
+  const LAYER_CODES = [
+    ['p', 'parking'], ['b', 'baana'], ['w', 'water'], ['m', 'mech'], ['c', 'citybikes']
+  ];
+  const DEFAULT_LAYERS_ON = 'p,b';
+
   function viewFromHash() {
-    const m = location.hash.match(/^#\/?(\d{1,2})\/(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)$/);
+    const m = location.hash.match(
+      /^#\/?(\d{1,2})\/(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)(?:\/([pbwmc,\-]+))?$/
+    );
     if (!m) return null;
     const zoom = parseInt(m[1], 10);
     const lat = parseFloat(m[2]);
     const lng = parseFloat(m[3]);
     if (zoom < MIN_ZOOM || zoom > MAX_ZOOM || !BOUNDS.contains([lat, lng])) return null;
-    return { center: [lat, lng], zoom };
+    const layers = m[4] === undefined
+      ? null
+      : new Set(m[4] === '-' ? [] : m[4].split(','));
+    return { center: [lat, lng], zoom, layers };
+  }
+
+  // Segment for the current toggle states; empty when nothing differs from
+  // the defaults, so plain view URLs stay short.
+  function currentLayerSegment() {
+    const on = [];
+    for (const [code, key] of LAYER_CODES) {
+      const cb = document.getElementById('toggle-' + key);
+      if (cb && cb.checked) on.push(code);
+    }
+    const s = on.join(',');
+    return s === DEFAULT_LAYERS_ON ? '' : '/' + (s || '-');
+  }
+
+  function updateHash() {
+    const c = map.getCenter();
+    history.replaceState(null, '',
+      `#${map.getZoom()}/${c.lat.toFixed(5)}/${c.lng.toFixed(5)}${currentLayerSegment()}`);
+  }
+
+  // Flip toggles to match a set from the URL. Dispatching 'change' reuses the
+  // normal handlers: row styling, add/remove, lazy city-bike fetch.
+  function applyLayerState(onSet) {
+    for (const [code, key] of LAYER_CODES) {
+      const cb = document.getElementById('toggle-' + key);
+      if (!cb) continue;
+      const want = onSet.has(code);
+      if (cb.checked !== want) {
+        cb.checked = want;
+        cb.dispatchEvent(new Event('change'));
+      }
+    }
   }
 
   const map = L.map('map', { minZoom: MIN_ZOOM, maxZoom: MAX_ZOOM });
@@ -116,18 +160,16 @@
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-tekijät'
   }).addTo(map);
 
-  // Keep the view in the URL so any spot on the map is shareable.
-  map.on('moveend', () => {
-    const c = map.getCenter();
-    const hash = `#${map.getZoom()}/${c.lat.toFixed(5)}/${c.lng.toFixed(5)}`;
-    history.replaceState(null, '', hash);
-  });
+  // Keep the view and layer state in the URL so any spot is shareable.
+  map.on('moveend', updateHash);
 
   // Follow hash changes without a reload (e.g. user pastes a shared link).
   window.addEventListener('hashchange', () => {
     const v = viewFromHash();
-    if (v && (map.getZoom() !== v.zoom ||
-        map.getCenter().distanceTo(L.latLng(v.center)) > 1)) {
+    if (!v) return;
+    if (v.layers) applyLayerState(v.layers);
+    if (map.getZoom() !== v.zoom ||
+        map.getCenter().distanceTo(L.latLng(v.center)) > 1) {
       map.setView(v.center, v.zoom);
     }
   });
@@ -167,6 +209,7 @@
   let parkingCluster = null;
   let parkingMarkers = [];
   let coveredOnly = false;
+  let cargoOnly = false;
 
   function parkingPopupHTML(props, lat, lon) {
     const type = PARKING_TYPES_FI[props.bicycle_parking] || 'Pyöräpysäköinti';
@@ -194,13 +237,14 @@
        </div>`;
   }
 
+  function parkingVisible(m) {
+    return (!coveredOnly || m._covered) && (!cargoOnly || m._cargo);
+  }
+
   function refreshParkingCluster() {
     if (!parkingCluster) return;
     parkingCluster.clearLayers();
-    const visible = coveredOnly
-      ? parkingMarkers.filter(m => m._covered)
-      : parkingMarkers;
-    parkingCluster.addLayers(visible);
+    parkingCluster.addLayers(parkingMarkers.filter(parkingVisible));
   }
 
   function loadParking() {
@@ -220,6 +264,7 @@
         const mark = L.marker([lat, lon], { icon });
         if (p.access === 'private') mark.setOpacity(0.5);
         mark._covered = p.covered === 'yes' || p.covered === 'partial';
+        mark._cargo = p['capacity:cargo_bike'] > 0;
         if (p.capacity != null) {
           mark.bindTooltip(String(p.capacity), {
             permanent: true, direction: 'right', className: 'marker-label'
@@ -230,7 +275,7 @@
       }
       refreshParkingCluster();
       layers.parking = parkingCluster;
-      map.addLayer(parkingCluster);
+      if (document.getElementById('toggle-parking').checked) map.addLayer(parkingCluster);
     }).catch(e => {
       console.warn('Parking:', e);
       toast('Pyöräpysäköintiaineiston lataus epäonnistui. Yritä päivittää sivu.');
@@ -240,7 +285,7 @@
   // ── Repair stations ───────────────────────────────────────────────────────
   function loadMech() {
     return loadJSON('mech.geojson').then(data => {
-      layers.mech = L.geoJSON(data, {
+      const layer = L.geoJSON(data, {
         pointToLayer(feature) {
           const [lon, lat] = feature.geometry.coordinates;
           const p = feature.properties;
@@ -267,7 +312,11 @@
           );
           return marker;
         }
-      }).addTo(map);
+      });
+      layers.mech = layer;
+      // Off by default — add only if the user has already flipped the toggle
+      // on while the data was still loading.
+      if (document.getElementById('toggle-mech').checked) map.addLayer(layer);
     }).catch(e => {
       console.warn('Mech:', e);
       toast('Huoltopisteiden lataus epäonnistui.');
@@ -277,7 +326,7 @@
   // ── Water points ──────────────────────────────────────────────────────────
   function loadWater() {
     return loadJSON('water.geojson').then(data => {
-      layers.water = L.geoJSON(data, {
+      const layer = L.geoJSON(data, {
         pointToLayer(feature) {
           const [lon, lat] = feature.geometry.coordinates;
           const p = feature.properties;
@@ -294,7 +343,11 @@
           );
           return marker;
         }
-      }).addTo(map);
+      });
+      layers.water = layer;
+      // Off by default — add only if the user has already flipped the toggle
+      // on while the data was still loading.
+      if (document.getElementById('toggle-water').checked) map.addLayer(layer);
     }).catch(e => {
       console.warn('Water:', e);
       toast('Vesipisteiden lataus epäonnistui.');
@@ -343,7 +396,7 @@
         }));
       }
 
-      group.addTo(map);
+      if (document.getElementById('toggle-baana').checked) group.addTo(map);
       map.on('zoomend', () => lines.setStyle({ weight: lineWeight(map.getZoom()) }));
       layers.baana = group;
     }).catch(e => {
@@ -428,15 +481,16 @@
       const row = document.getElementById(rowId);
       if (!cb) return;
       cb.addEventListener('change', () => {
+        row.classList.toggle('layer-off', !cb.checked);
         const layer = layers[layerKey];
-        if (!layer) return;
-        if (cb.checked) {
-          map.addLayer(layer);
-          row.classList.remove('layer-off');
-        } else {
-          map.removeLayer(layer);
-          row.classList.add('layer-off');
+        if (layer) { // null = still loading; the loader checks the toggle
+          if (cb.checked) {
+            map.addLayer(layer);
+          } else {
+            map.removeLayer(layer);
+          }
         }
+        updateHash();
       });
     });
 
@@ -448,23 +502,30 @@
         cbRow.classList.remove('layer-off');
         if (layers.citybikes) {
           map.addLayer(layers.citybikes);
-          return;
-        }
-        await loadCitybikes(false);
-        if (!layers.citybikes) {
-          // Initial fetch failed — flip the toggle back off.
-          cbToggle.checked = false;
-          cbRow.classList.add('layer-off');
+        } else {
+          await loadCitybikes(false);
+          if (!layers.citybikes) {
+            // Initial fetch failed — flip the toggle back off.
+            cbToggle.checked = false;
+            cbRow.classList.add('layer-off');
+          }
         }
       } else {
         cbRow.classList.add('layer-off');
         if (layers.citybikes) map.removeLayer(layers.citybikes);
       }
+      updateHash();
     });
 
     const coveredCb = document.getElementById('covered-filter');
     coveredCb.addEventListener('change', () => {
       coveredOnly = coveredCb.checked;
+      refreshParkingCluster();
+    });
+
+    const cargoCb = document.getElementById('cargo-filter');
+    cargoCb.addEventListener('change', () => {
+      cargoOnly = cargoCb.checked;
       refreshParkingCluster();
     });
   }
@@ -620,9 +681,15 @@
       locating = false;
 
       const ranked = parkingMarkers
+        .filter(parkingVisible) // respect the covered/cargo filters
         .map(m => ({ m, d: map.distance(e.latlng, m.getLatLng()) }))
         .sort((a, b) => a.d - b.d)
         .slice(0, 3);
+
+      if (!ranked.length) {
+        toast('Ei pyöräpaikkoja valituilla suodattimilla.');
+        return;
+      }
 
       nearestGroup.clearLayers();
       nearestGroup.addLayer(L.marker(e.latlng, {
@@ -634,7 +701,6 @@
       ranked.forEach(({ m, d }, i) => {
         const ll = m.getLatLng();
         fitPoints.push(ll);
-        const p = m._props || {};
         const distTxt = d >= 1000 ? `${(d / 1000).toFixed(1)} km` : `${Math.round(d)} m`;
         const hl = L.marker(ll, {
           zIndexOffset: 1000, // stay clickable above the parking marker itself
@@ -667,13 +733,15 @@
   })();
 
   // ── Boot: load everything, hide the overlay early ─────────────────────────
+  wireToggles();
+  if (start.layers) applyLayerState(start.layers); // layer state from the URL
+
   const tilesReady = new Promise(res => tiles.once('load', res));
   const parkingDone = loadParking();
   loadMech();
   loadWater();
   loadBaana();
   loadMeta();
-  wireToggles();
 
   const timeout = new Promise(res => setTimeout(res, 9000));
   Promise.race([Promise.all([tilesReady, parkingDone]), timeout]).then(() => {

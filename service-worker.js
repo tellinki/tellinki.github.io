@@ -12,7 +12,7 @@
  *
  * Bump VERSION when the app shell changes to roll the cache.
  */
-const VERSION = 'tellinki-v2.2.3';
+const VERSION = 'tellinki-v2.2.4';
 const SHELL_CACHE = `shell-${VERSION}`;
 const DATA_CACHE = `data-${VERSION}`;
 const TILE_CACHE = `tiles-${VERSION}`;
