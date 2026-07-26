@@ -32,6 +32,10 @@
   <link rel="icon" type="image/png" sizes="32x32" href="images/icons/icon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="images/icons/icon-16x16.png">
 
+  <!-- Speed up first tile paint: open the connection to the tile host early -->
+  <link rel="preconnect" href="https://tile.openstreetmap.de" crossorigin>
+  <link rel="dns-prefetch" href="https://tile.openstreetmap.de">
+
   <!-- Leaflet + plugins (self-hosted) -->
   <link rel="stylesheet" href="css/leaflet.css">
   <link rel="stylesheet" href="css/MarkerCluster.css">

@@ -5,14 +5,19 @@
  *  - App shell (HTML/CSS/JS/icons): cache-first, so the app opens offline.
  *  - Data files (parking.json, *.geojson, data-meta.json): network-first,
  *    so fresh data actually reaches users; cache is the offline fallback.
- *  - Cross-origin (map tiles, live city-bike API): straight to network,
- *    never cached.
+ *  - Map tiles (tile.openstreetmap.de): cache-first with a bounded cache,
+ *    so repeat visits render the base map almost instantly. Tiles are
+ *    opaque responses; OSM allows reasonable client-side caching.
+ *  - Other cross-origin (live city-bike API): straight to network.
  *
  * Bump VERSION when the app shell changes to roll the cache.
  */
-const VERSION = 'tellinki-v2.0.0';
+const VERSION = 'tellinki-v2.1.0';
 const SHELL_CACHE = `shell-${VERSION}`;
 const DATA_CACHE = `data-${VERSION}`;
+const TILE_CACHE = `tiles-${VERSION}`;
+const TILE_MAX_ITEMS = 600; // ~a few MB of tiles, trimmed oldest-first
+const TILE_HOSTS = ['tile.openstreetmap.de'];
 
 const SHELL_URLS = [
   './',
@@ -48,7 +53,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  const keep = [SHELL_CACHE, DATA_CACHE];
+  const keep = [SHELL_CACHE, DATA_CACHE, TILE_CACHE];
   event.waitUntil(
     caches.keys()
       .then(names => Promise.all(
@@ -82,11 +87,39 @@ async function networkFirst(request) {
   }
 }
 
+async function trimCache(cacheName, maxItems) {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  for (let i = 0; i <= keys.length - maxItems; i++) {
+    await cache.delete(keys[i]);
+  }
+}
+
+async function tileFirst(request) {
+  const cache = await caches.open(TILE_CACHE);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  // Tile <img> requests are no-cors → opaque responses (status 0) are fine.
+  if (response.ok || response.type === 'opaque') {
+    cache.put(request, response.clone())
+      .then(() => trimCache(TILE_CACHE, TILE_MAX_ITEMS))
+      .catch(() => {});
+  }
+  return response;
+}
+
 self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return; // tiles, live APIs: network only
+
+  if (url.origin !== self.location.origin) {
+    if (TILE_HOSTS.includes(url.hostname)) {
+      event.respondWith(tileFirst(request));
+    }
+    return; // everything else cross-origin: network only
+  }
 
   event.respondWith(DATA_RE.test(url.pathname) ? networkFirst(request) : cacheFirst(request));
 });
