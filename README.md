@@ -1,7 +1,7 @@
 # Tellinki
 **Simple map of Helsinki Bicycle Parking**
 
-Tellinki.com is a static PWA website, utilizing leaflet.js and OpenStreetMap database for showing frame-lockable bicycle parking in the Helsinki capital region, Finland. Other layers: public drinking water points, bicycle repair stations, the Baana cycling network, and live city-bike availability (via the free [CityBikes API](https://citybik.es)). Parking markers have popups with capacity, cover info and routing/OSM-edit links; the site also has address search, a "nearest parking" finder and shareable map URLs.
+Tellinki.com is a static PWA website, utilizing leaflet.js and OpenStreetMap database for showing frame-lockable bicycle parking in the Helsinki capital region, Finland. Other layers: public drinking water points, bicycle repair stations, the Baana cycling network, and live city-bike availability (via the free [CityBikes API](https://citybik.es), no key needed). Parking markers have popups with capacity, cover info and routing/OSM-edit links; the site also has address search, a "nearest parking" finder and shareable map URLs.
 
 ## Structure
 
@@ -28,8 +28,8 @@ python3 update_data.py --only parking   # or: mech, water, baanat
 The script rebuilds the JSON files and stamps `data-meta.json`. Commit and push the changed files. Please run it only when you actually need fresh data — Overpass is a shared public service.
 
 ## To-do
-* Adding icons for cargo bike parking
 * Validating and adding mechanical repair data to OSM (everyone can do this!)
+* Adding optional layer for Helsinki's bike network
 
 ## Deployment
 
@@ -41,4 +41,4 @@ The website domain is registered at Namecheap and DNS is handled with Cloudflare
 
 ## Contribution
 
-First years of code were done manually, later cleanup was done using AI assistance. For any code changes, simply create a PR. For improving the data accuracy, edit the OpenStreetMap database.
+For any code changes, simply create a PR. For improving the data accuracy, edit the OpenStreetMap database.

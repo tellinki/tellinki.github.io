@@ -123,6 +123,15 @@
     history.replaceState(null, '', hash);
   });
 
+  // Follow hash changes without a reload (e.g. user pastes a shared link).
+  window.addEventListener('hashchange', () => {
+    const v = viewFromHash();
+    if (v && (map.getZoom() !== v.zoom ||
+        map.getCenter().distanceTo(L.latLng(v.center)) > 1)) {
+      map.setView(v.center, v.zoom);
+    }
+  });
+
   L.control.locate({
     position: 'topleft',
     strings: { title: 'Näytä sijaintini' }
@@ -141,6 +150,15 @@
     stands: ICONS.stand, rack: ICONS.rack,
     safe_loops: ICONS.safeloop, 'two-tier': ICONS.twotier
   };
+  // Cargo-capable parking gets an orange ring around the same icon.
+  const CARGO_ICON_MAP = {};
+  function parkingIcon(type, isCargo) {
+    if (!isCargo) return ICON_MAP[type];
+    if (!CARGO_ICON_MAP[type]) {
+      CARGO_ICON_MAP[type] = L.icon({ ...ICON_MAP[type].options, className: 'cargo-icon' });
+    }
+    return CARGO_ICON_MAP[type];
+  }
 
   // ── Layer refs (null until loaded) ────────────────────────────────────────
   const layers = { parking: null, baana: null, water: null, mech: null, citybikes: null };
@@ -161,6 +179,9 @@
     }
     if (props['capacity:cargo_bike'] != null) {
       rows.push(`<div class="popup-service">Tavarapyöräpaikat: <strong>${props['capacity:cargo_bike']}</strong></div>`);
+    }
+    if (props.access === 'private') {
+      rows.push('<div class="popup-muted">Yksityinen paikka.</div>');
     }
     if (props.name) {
       rows.push(`<div class="popup-service">${escapeHtml(props.name)}</div>`);
@@ -194,9 +215,10 @@
       for (const f of json.features) {
         const p = f.properties;
         const [lon, lat] = f.geometry.coordinates;
-        const icon = ICON_MAP[p.bicycle_parking];
+        const icon = parkingIcon(p.bicycle_parking, p['capacity:cargo_bike'] > 0);
         if (!icon || typeof lat !== 'number' || typeof lon !== 'number') continue;
         const mark = L.marker([lat, lon], { icon });
+        if (p.access === 'private') mark.setOpacity(0.5);
         mark._covered = p.covered === 'yes' || p.covered === 'partial';
         if (p.capacity != null) {
           mark.bindTooltip(String(p.capacity), {

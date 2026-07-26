@@ -132,6 +132,8 @@ out tags center;"""
         cargo = num(tags.get("capacity:cargo_bike"))
         if cargo:
             props["capacity:cargo_bike"] = cargo
+        if tags.get("access") == "private":
+            props["access"] = "private"  # dimmed marker on the map
         if tags.get("name"):
             props["name"] = tags["name"]
         feats.append(point_feature(f'{el["type"]}/{el["id"]}', lat, lon, props))

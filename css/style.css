@@ -229,6 +229,18 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); }
 }
 .sub-item img { width: 15px; height: 15px; object-fit: contain; flex-shrink: 0; }
 
+/* Cargo-capable parking: orange ring around the marker icon */
+.cargo-icon {
+  box-shadow: 0 0 0 3px var(--orange);
+  border-radius: 50%;
+}
+.legend-cargo-sample {
+  box-shadow: 0 0 0 2.5px var(--orange);
+  border-radius: 50%;
+}
+/* Private parking: dimmed marker */
+.legend-private-sample { opacity: .5; }
+
 /* Covered-only filter */
 .covered-row {
   display: flex; align-items: center; gap: 6px;
