@@ -167,6 +167,7 @@
   let parkingCluster = null;
   let parkingMarkers = [];
   let coveredOnly = false;
+  let cargoOnly = false;
 
   function parkingPopupHTML(props, lat, lon) {
     const type = PARKING_TYPES_FI[props.bicycle_parking] || 'Pyöräpysäköinti';
@@ -197,9 +198,9 @@
   function refreshParkingCluster() {
     if (!parkingCluster) return;
     parkingCluster.clearLayers();
-    const visible = coveredOnly
-      ? parkingMarkers.filter(m => m._covered)
-      : parkingMarkers;
+    const visible = parkingMarkers.filter(m =>
+      (!coveredOnly || m._covered) && (!cargoOnly || m._cargo)
+    );
     parkingCluster.addLayers(visible);
   }
 
@@ -220,6 +221,7 @@
         const mark = L.marker([lat, lon], { icon });
         if (p.access === 'private') mark.setOpacity(0.5);
         mark._covered = p.covered === 'yes' || p.covered === 'partial';
+        mark._cargo = p['capacity:cargo_bike'] > 0;
         if (p.capacity != null) {
           mark.bindTooltip(String(p.capacity), {
             permanent: true, direction: 'right', className: 'marker-label'
@@ -465,6 +467,12 @@
     const coveredCb = document.getElementById('covered-filter');
     coveredCb.addEventListener('change', () => {
       coveredOnly = coveredCb.checked;
+      refreshParkingCluster();
+    });
+
+    const cargoCb = document.getElementById('cargo-filter');
+    cargoCb.addEventListener('change', () => {
+      cargoOnly = cargoCb.checked;
       refreshParkingCluster();
     });
   }
