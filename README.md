@@ -29,7 +29,6 @@ The script rebuilds the JSON files and stamps `data-meta.json`. Commit and push 
 
 ## To-do
 * Validating and adding mechanical repair data to OSM (everyone can do this!)
-* Adding optional layer for Helsinki's bike network
 
 ## Deployment
 
@@ -41,4 +40,4 @@ The website domain is registered at Namecheap and DNS is handled with Cloudflare
 
 ## Contribution
 
-For any code changes, simply create a PR. For improving the data accuracy, edit the OpenStreetMap database.
+First pages were hand made, since spring 2026 then cleaned and updated with AI. For any code changes, simply create a PR. For improving the data accuracy, edit the OpenStreetMap database.
