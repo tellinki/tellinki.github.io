@@ -30,7 +30,6 @@ The script rebuilds the JSON files and stamps `data-meta.json`. Commit and push 
 ## To-do
 * Adding icons for cargo bike parking
 * Validating and adding mechanical repair data to OSM (everyone can do this!)
-* Adding optional layer for Helsinki's bike network
 
 ## Deployment
 
