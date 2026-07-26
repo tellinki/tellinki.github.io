@@ -234,12 +234,10 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); }
   box-shadow: 0 0 0 3px var(--orange);
   border-radius: 50%;
 }
-.legend-cargo-sample {
-  box-shadow: 0 0 0 2.5px var(--orange);
-  border-radius: 50%;
+.legend-cargo-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--orange); flex-shrink: 0;
 }
-/* Private parking: dimmed marker */
-.legend-private-sample { opacity: .5; }
 
 /* Covered-only filter */
 .covered-row {
