@@ -156,8 +156,8 @@
   map.setView(start.center, start.zoom);
   map.setMaxBounds(BOUNDS);
 
-  const tiles = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-tekijät'
+  const tiles = L.tileLayer('https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap contributors, © CARTO'
   }).addTo(map);
 
   // Keep the view and layer state in the URL so any spot is shareable.
