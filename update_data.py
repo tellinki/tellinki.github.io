@@ -193,7 +193,7 @@ out tags center;"""
 # ── Baana network ────────────────────────────────────────────────────────────
 
 BAANA_NETWORK_RELATION = 13923968  # "Pääkaupunkiseudun baanaverkko" — finished baanas only
-
+TAVOITEVERKKO_RELATION = 13937344  # Pyöräliikenteen tavoiteverkko
 
 def build_baanat() -> dict:
     # Baanas are mapped as route=bicycle relations. Only fetch routes that
@@ -251,12 +251,61 @@ def build_baanat() -> dict:
     feats.sort(key=lambda f: f["properties"]["name"])
     return {"type": "FeatureCollection", "features": feats}
 
+def build_tavoiteverkko() -> dict:
+    data = overpass(
+        f'[out:json][timeout:120];relation({TAVOITEVERKKO_RELATION});out body;'
+    )
+    member_ids = [
+        m["ref"]
+        for el in data.get("elements", [])
+        for m in el.get("members", [])
+        if m.get("type") == "relation"
+    ]
+    if not member_ids:
+        raise RuntimeError("Tavoiteverkko relation has no member relations")
+
+    ids = ",".join(str(i) for i in member_ids)
+    geom_data = overpass(f'[out:json][timeout:240];relation(id:{ids});out geom;')
+
+    merged = {}
+    for rel in geom_data.get("elements", []):
+        tags = rel.get("tags", {})
+        name = tags.get("name", "")
+        if not name:
+            continue
+        lines = []
+        for m in rel.get("members", []):
+            if m.get("type") != "way" or not m.get("geometry"):
+                continue
+            lines.append(
+                [[round(p["lon"], 6), round(p["lat"], 6)] for p in m["geometry"]]
+            )
+        if not lines:
+            continue
+        key = (name, tags.get("ref") or None)
+        merged.setdefault(key, []).extend(lines)
+
+    feats = []
+    for (name, ref), lines in merged.items():
+        props = {"name": name}
+        if ref:
+            props["ref"] = ref
+        geom = (
+            {"type": "LineString", "coordinates": lines[0]}
+            if len(lines) == 1
+            else {"type": "MultiLineString", "coordinates": lines}
+        )
+        feats.append({"type": "Feature", "properties": props, "geometry": geom})
+    feats.sort(key=lambda f: f["properties"]["name"])
+    return {"type": "FeatureCollection", "features": feats}
+
 
 BUILDERS = {
     "parking": ("parking.json", build_parking),
     "mech": ("mech.geojson", build_mech),
     "water": ("water.geojson", build_water),
     "baanat": ("baanat.geojson", build_baanat),
+    "tavoiteverkko": ("tavoiteverkko.geojson", build_tavoiteverkko),
 }
 
 
