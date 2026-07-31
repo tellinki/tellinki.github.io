@@ -156,6 +156,8 @@
   const start = viewFromHash() || DEFAULT_VIEW;
   map.setView(start.center, start.zoom);
   map.setMaxBounds(BOUNDS);
+  map.createPane('tavoiteverkko').style.zIndex = 250; // below default overlay pane
+  map.createPane('baana').style.zIndex = 450;         // above tavoiteverkko
 
   const tiles = L.tileLayer('https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     attribution: '© OpenStreetMap contributors, © CARTO'
@@ -370,6 +372,7 @@
     return loadJSON('baanat.geojson').then(data => {
       const group = L.layerGroup();
       const lines = L.geoJSON(data, {
+        pane: 'baana',
         filter: f =>
           f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString',
         style: () => ({ color: '#EF9F27', weight: lineWeight(map.getZoom()), opacity: 1 }),
@@ -410,13 +413,14 @@
     return loadJSON('tavoiteverkko.geojson').then(data => {
       const group = L.layerGroup();
       const lines = L.geoJSON(data, {
+        pane: 'tavoiteverkko',
         filter: f =>
         f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString',
         style: () => ({ color: '#4CAF50', weight: lineWeight(map.getZoom()), opacity: 0.85 }),
                               onEachFeature(feature, layer) {
                                 if (feature.properties && feature.properties.name) {
                                   layer.bindTooltip(feature.properties.name, {
-                                    permanent: false, direction: 'center', className: 'line-tooltip'
+                                    permanent: false, sticky: true, className: 'line-tooltip'
                                   });
                                 }
                               }
