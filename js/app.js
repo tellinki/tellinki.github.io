@@ -368,46 +368,64 @@
     return mid ? L.latLng(mid[1], mid[0]) : null;
   }
 
-  function loadBaana() {
-    return loadJSON('baanat.geojson').then(data => {
-      const group = L.layerGroup();
-      const lines = L.geoJSON(data, {
-        pane: 'baana',
-        filter: f =>
-          f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString',
-        style: () => ({ color: '#EF9F27', weight: lineWeight(map.getZoom()), opacity: 1 }),
-        onEachFeature(feature, layer) {
-          if (feature.properties && feature.properties.name) {
-            layer.bindTooltip(feature.properties.name, {
-              permanent: false, direction: 'center', className: 'line-tooltip'
-            });
-          }
+function loadBaana() {
+  return loadJSON('baanat.geojson').then(data => {
+    const group = L.layerGroup();
+    const lines = L.geoJSON(data, {
+      pane: 'baana',
+      filter: f =>
+        f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString',
+      style: () => ({ color: '#EF9F27', weight: lineWeight(map.getZoom()), opacity: 1 }),
+      onEachFeature(feature, layer) {
+        if (feature.properties && feature.properties.name) {
+          layer.bindTooltip(feature.properties.name, {
+            permanent: false,
+            sticky: true,
+            className: 'line-tooltip'
+          });
         }
-      });
-      group.addLayer(lines);
-
-      for (const f of data.features) {
-        const ref = f.properties && f.properties.ref;
-        if (!ref) continue;
-        const pos = shieldLatLng(f.geometry);
-        if (!pos) continue;
-        group.addLayer(L.marker(pos, {
-          icon: L.divIcon({
-            className: 'road-icon',
-            html: `<div class="road-shield">${escapeHtml(ref)}</div>`,
-            iconSize: [26, 26], iconAnchor: [13, 13]
-          })
-        }));
+        layer.on('mouseover', function () {
+          this._hovered = true;
+          this.bringToFront();
+          this.setStyle({ color: '#c47e15', weight: lineWeight(map.getZoom()) + 3, opacity: 1 });
+        });
+        layer.on('mouseout', function () {
+          this._hovered = false;
+          this.setStyle({ color: '#EF9F27', weight: lineWeight(map.getZoom()), opacity: 1 });
+        });
       }
-
-      if (document.getElementById('toggle-baana').checked) group.addTo(map);
-      map.on('zoomend', () => lines.setStyle({ weight: lineWeight(map.getZoom()) }));
-      layers.baana = group;
-    }).catch(e => {
-      console.warn('Baana:', e);
-      toast('Baanojen lataus epäonnistui.');
     });
-  }
+    group.addLayer(lines);
+
+    for (const f of data.features) {
+      const ref = f.properties && f.properties.ref;
+      if (!ref) continue;
+      const pos = shieldLatLng(f.geometry);
+      if (!pos) continue;
+      group.addLayer(L.marker(pos, {
+        icon: L.divIcon({
+          className: 'road-icon',
+          html: `<div class="road-shield">${escapeHtml(ref)}</div>`,
+          iconSize: [26, 26], iconAnchor: [13, 13]
+        })
+      }));
+    }
+
+    if (document.getElementById('toggle-baana').checked) group.addTo(map);
+    map.on('zoomend', () => {
+      lines.eachLayer(layer => {
+        layer.setStyle({
+          color: layer._hovered ? '#c47e15' : '#EF9F27',
+          weight: lineWeight(map.getZoom()) + (layer._hovered ? 3 : 0)
+        });
+      });
+    });
+    layers.baana = group;
+  }).catch(e => {
+    console.warn('Baana:', e);
+    toast('Baanojen lataus epäonnistui.');
+  });
+}
 
   function loadTavoiteverkko() {
     return loadJSON('tavoiteverkko.geojson').then(data => {
