@@ -100,7 +100,8 @@
   // Layer visibility is encoded in the URL hash after the view, using one
   // letter per layer: #12/60.21/24.98/p,b,w  ('-' = all off, omitted = default)
   const LAYER_CODES = [
-    ['p', 'parking'], ['b', 'baana'], ['w', 'water'], ['m', 'mech'], ['c', 'citybikes']
+    ['p', 'parking'], ['b', 'baana'], ['w', 'water'],
+    ['m', 'mech'], ['c', 'citybikes'], ['t', 'tavoiteverkko']
   ];
   const DEFAULT_LAYERS_ON = 'p,b';
 
@@ -203,7 +204,7 @@
   }
 
   // ── Layer refs (null until loaded) ────────────────────────────────────────
-  const layers = { parking: null, baana: null, water: null, mech: null, citybikes: null };
+    const layers = { parking: null, baana: null, water: null, mech: null, citybikes: null, tavoiteverkko: null };
 
   // ── Parking ───────────────────────────────────────────────────────────────
   let parkingCluster = null;
@@ -405,6 +406,46 @@
     });
   }
 
+  function loadTavoiteverkko() {
+    return loadJSON('tavoiteverkko.geojson').then(data => {
+      const group = L.layerGroup();
+      const lines = L.geoJSON(data, {
+        filter: f =>
+        f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString',
+        style: () => ({ color: '#4CAF50', weight: lineWeight(map.getZoom()), opacity: 0.85 }),
+                              onEachFeature(feature, layer) {
+                                if (feature.properties && feature.properties.name) {
+                                  layer.bindTooltip(feature.properties.name, {
+                                    permanent: false, direction: 'center', className: 'line-tooltip'
+                                  });
+                                }
+                              }
+      });
+      group.addLayer(lines);
+
+      for (const f of data.features) {
+        const ref = f.properties && f.properties.ref;
+        if (!ref) continue;
+        const pos = shieldLatLng(f.geometry);
+        if (!pos) continue;
+        group.addLayer(L.marker(pos, {
+          icon: L.divIcon({
+            className: 'road-icon',
+            html: `<div class="road-shield" style="background:#4CAF50;border-color:#2E7D32;color:#fff">${escapeHtml(ref)}</div>`,
+                          iconSize: [26, 26], iconAnchor: [13, 13]
+          })
+        }));
+      }
+
+      if (document.getElementById('toggle-tavoiteverkko').checked) group.addTo(map);
+      map.on('zoomend', () => lines.setStyle({ weight: lineWeight(map.getZoom()) }));
+      layers.tavoiteverkko = group;
+    }).catch(e => {
+      console.warn('Tavoiteverkko:', e);
+      toast('Tavoiteverkon lataus epäonnistui.');
+    });
+  }
+
   // ── City bikes (live) ─────────────────────────────────────────────────────
   let cbCluster = null;
   let cbFailedOnce = false;
@@ -473,9 +514,10 @@
   function wireToggles() {
     [
       ['toggle-parking', 'parking', 'row-parking'],
-      ['toggle-baana',   'baana',   'row-baana'],
-      ['toggle-water',   'water',   'row-water'],
-      ['toggle-mech',    'mech',    'row-mech']
+      ['toggle-baana', 'baana', 'row-baana'],
+      ['toggle-tavoiteverkko', 'tavoiteverkko', 'row-tavoiteverkko'],
+      ['toggle-water', 'water', 'row-water'],
+      ['toggle-mech', 'mech', 'row-mech']
     ].forEach(([checkId, layerKey, rowId]) => {
       const cb = document.getElementById(checkId);
       const row = document.getElementById(rowId);
@@ -741,6 +783,7 @@
   loadMech();
   loadWater();
   loadBaana();
+  loadTavoiteverkko();
   loadMeta();
 
   const timeout = new Promise(res => setTimeout(res, 9000));
