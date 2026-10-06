@@ -159,8 +159,8 @@
   map.createPane('tavoiteverkko').style.zIndex = 250; // below default overlay pane
   map.createPane('baana').style.zIndex = 450;         // above tavoiteverkko
 
-  const tiles = L.tileLayer('https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap contributors, © CARTO'
+  const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
   // Keep the view and layer state in the URL so any spot is shareable.
